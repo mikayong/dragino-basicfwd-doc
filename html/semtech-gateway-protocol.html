@@ -1,0 +1,642 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Basic communication protocol between Lora gateway and server &mdash; basicdocs 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="_static/doctools.js?v=888ff710"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            basicdocs
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Basic communication protocol between Lora gateway and server</a><ul>
+<li><a class="reference internal" href="#introduction">1. Introduction</a></li>
+<li><a class="reference internal" href="#system-schematic-and-definitions">1. System schematic and definitions</a></li>
+<li><a class="reference internal" href="#upstream-protocol">1. Upstream protocol</a><ul>
+<li><a class="reference internal" href="#sequence-diagram">3.1. Sequence diagram ###</a></li>
+<li><a class="reference internal" href="#push-data-packet">3.2. PUSH_DATA packet ###</a></li>
+<li><a class="reference internal" href="#push-ack-packet">3.3. PUSH_ACK packet ###</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#upstream-json-data-structure">1. Upstream JSON data structure</a></li>
+<li><a class="reference internal" href="#downstream-protocol">1. Downstream protocol</a><ul>
+<li><a class="reference internal" href="#id13">5.1. Sequence diagram ###</a></li>
+<li><a class="reference internal" href="#pull-data-packet">5.2. PULL_DATA packet ###</a></li>
+<li><a class="reference internal" href="#pull-ack-packet">5.3. PULL_ACK packet ###</a></li>
+<li><a class="reference internal" href="#pull-resp-packet">5.4. PULL_RESP packet ###</a></li>
+<li><a class="reference internal" href="#tx-ack-packet">5.5. TX_ACK packet ###</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#downstream-json-data-structure">1. Downstream JSON data structure</a></li>
+<li><a class="reference internal" href="#revisions">1. Revisions</a><ul>
+<li><a class="reference internal" href="#v1-4">v1.4 ###</a></li>
+<li><a class="reference internal" href="#v1-3">v1.3 ###</a></li>
+<li><a class="reference internal" href="#v1-2">v1.2 ###</a></li>
+<li><a class="reference internal" href="#v1-1">v1.1 ###</a></li>
+<li><a class="reference internal" href="#v1-0">v1.0 ###</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">basicdocs</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Basic communication protocol between Lora gateway and server</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/semtech-gateway-protocol.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><p>______                              _</p>
+</div></blockquote>
+<p>/ _____)             _              | |</p>
+</div></blockquote>
+<dl class="simple">
+<dt>( (____  _____ ____ _| <a href="#id26"><span class="problematic" id="id27">|_ _____  ____|</span></a> <a href="#id1"><span class="problematic" id="id2">|</span></a>__</dt><dd><p>____ | ___ |    (_   _) ___ <a href="#id28"><span class="problematic" id="id29">|/ ___)  _ \
+_____) ) ____|</span></a> | | || <a href="#id30"><span class="problematic" id="id31">|_|</span></a> ____( (___| | | |</p>
+</dd>
+<dt>(______/<a href="#id32"><span class="problematic" id="id33">|_____)_|_|_|</span></a> __)_____)____)_| <a href="#id34"><span class="problematic" id="id35">|_|</span></a></dt><dd><p>(C)2013 Semtech-Cycleo</p>
+</dd>
+</dl>
+</div></blockquote>
+<section id="basic-communication-protocol-between-lora-gateway-and-server">
+<h1>Basic communication protocol between Lora gateway and server<a class="headerlink" href="#basic-communication-protocol-between-lora-gateway-and-server" title="Link to this heading"></a></h1>
+<section id="introduction">
+<h2>1. Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>The protocol between the gateway and the server is purposefully very basic and
+for demonstration purpose only, or for use on private and reliable networks.</p>
+<p>There is no authentication of the gateway or the server, and the acknowledges
+are only used for network quality assessment, not to correct UDP datagrams
+losses (no retries).</p>
+</section>
+<section id="system-schematic-and-definitions">
+<h2>1. System schematic and definitions<a class="headerlink" href="#system-schematic-and-definitions" title="Link to this heading"></a></h2>
+<blockquote>
+<div><dl>
+<dt>((( Y )))</dt><dd><div class="line-block">
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+</div>
+</dd>
+</dl>
+</div></blockquote>
+<ul>
+<li><ul>
+<li><dl>
+<dt>-<a href="#id3"><span class="problematic" id="id4">|</span></a>- - - - - - - - - - - - - +        xxxxxxxxxxxx          +——–+</dt><dd><div class="line-block">
+<div class="line">+–+———–+     +——+ |       xx x  x     xxx        |        |</div>
+<div class="line">|              |     |      | |      xx  Internet  xx        |        |</div>
+<div class="line">| Concentrator <a href="#id36"><span class="problematic" id="id37">|&lt;---&gt;|</span></a> Host <a href="#id38"><span class="problematic" id="id39">|&lt;-------xx     or    xx--------&gt;|</span></a>        |</div>
+<div class="line">|              | SPI |      | |      xx  Intranet  xx        | Server |</div>
+<div class="line">+————–+     +——+ |       xxxx   x   xxxx        |        |</div>
+<div class="line-block">
+<div class="line">^                     ^    |           xxxxxxxx           |        |</div>
+<div class="line">| PPS +——-+ NMEA  |    |                              |        |</div>
+<div class="line">+—–|  GPS  <a href="#id5"><span class="problematic" id="id6">|</span></a>——-+    |                              +——–+</div>
+<div class="line-block">
+<div class="line">| (opt) |            |</div>
+<div class="line">+——-+            |</div>
+<div class="line-block">
+<div class="line-block">
+<div class="line"><a href="#id7"><span class="problematic" id="id8">|</span></a></div>
+</div>
+<div class="line">Gateway           |</div>
+</div>
+</div>
+</div>
+</div>
+<p>+- - - - - - - - - - - - - - - -+</p>
+</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
+<p>__Concentrator__: radio RX/TX board, based on Semtech multichannel modems
+(SX130x), transceivers (SX135x) and/or low-power stand-alone modems (SX127x).</p>
+<p>__Host__: embedded computer on which the packet forwarder is run. Drives the
+concentrator through a SPI link.</p>
+<p>__GPS__: GNSS (GPS, Galileo, GLONASS, etc) receiver with a “1 Pulse Per Second”
+output and a serial link to the host to send NMEA frames containing time and
+geographical coordinates data. Optional.</p>
+<p>__Gateway__: a device composed of at least one radio concentrator, a host, some
+network connection to the internet or a private network (Ethernet, 3G, Wifi,
+microwave link), and optionally a GPS receiver for synchronization.</p>
+<p>__Server__: an abstract computer that will process the RF packets received and
+forwarded by the gateway, and issue RF packets in response that the gateway
+will have to emit.</p>
+<p>It is assumed that the gateway can be behind a NAT or a firewall stopping any
+incoming connection.
+It is assumed that the server has an static IP address (or an address solvable
+through a DNS service) and is able to receive incoming connections on a
+specific port.</p>
+</section>
+<section id="upstream-protocol">
+<h2>1. Upstream protocol<a class="headerlink" href="#upstream-protocol" title="Link to this heading"></a></h2>
+<section id="sequence-diagram">
+<h3>3.1. Sequence diagram ###<a class="headerlink" href="#sequence-diagram" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p>+———+                                                    +———+
+| Gateway |                                                    | Server  |
++———+                                                    +———+</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">———————————–                        |</div>
+</div>
+<p><a href="#id40"><span class="problematic" id="id41">|-|</span></a> When 1-N RF packets are received |                         |
+| ————————————                         |
+|                                                              |
+| PUSH_DATA (token X, GW MAC, JSON payload)                    |
+<a href="#id42"><span class="problematic" id="id43">|-------------------------------------------------------------&gt;|</span></a>
+|                                                              |
+|                                           PUSH_ACK (token X) |
+<a href="#id44"><span class="problematic" id="id45">|&lt;-------------------------------------------------------------|</span></a>
+|                              ——————————|
+|                              | process packets <em>after</em> ack <a href="#id46"><span class="problematic" id="id47">|-|</span></a>
+|                              ——————————- |
+|                                                              |</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="push-data-packet">
+<h3>3.2. PUSH_DATA packet ###<a class="headerlink" href="#push-data-packet" title="Link to this heading"></a></h3>
+<p>That packet type is used by the gateway mainly to forward the RF packets
+received, and associated metadata, to the server.</p>
+<blockquote>
+<div><p>Bytes  | Function</p>
+</div></blockquote>
+<dl class="simple">
+<dt>:——:<a href="#id9"><span class="problematic" id="id10">|</span></a>———————————————————————</dt><dd><p>0      | protocol version = 2
+1-2    | random token
+3      | PUSH_DATA identifier 0x00
+4-11   | Gateway unique identifier (MAC address)
+12-end | JSON object, starting with {, ending with }, see section 4</p>
+</dd>
+</dl>
+</section>
+<section id="push-ack-packet">
+<h3>3.3. PUSH_ACK packet ###<a class="headerlink" href="#push-ack-packet" title="Link to this heading"></a></h3>
+<p>That packet type is used by the server to acknowledge immediately all the
+PUSH_DATA packets received.</p>
+<blockquote>
+<div><p>Bytes  | Function</p>
+</div></blockquote>
+<dl class="simple">
+<dt>:——:<a href="#id11"><span class="problematic" id="id12">|</span></a>———————————————————————</dt><dd><p>0      | protocol version = 2
+1-2    | same token as the PUSH_DATA packet to acknowledge
+3      | PUSH_ACK identifier 0x01</p>
+</dd>
+</dl>
+</section>
+</section>
+<section id="upstream-json-data-structure">
+<h2>1. Upstream JSON data structure<a class="headerlink" href="#upstream-json-data-structure" title="Link to this heading"></a></h2>
+<p>The root object can contain an array named “rxpk”:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">     </span><span class="nt">&quot;rxpk&quot;</span><span class="p">:[</span><span class="w"> </span><span class="p">{</span><span class="err">...</span><span class="p">},</span><span class="w"> </span><span class="err">...</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>That array contains at least one JSON object, each object contain a RF packet
+and associated metadata with the following fields:</p>
+<blockquote>
+<div><p>Name |  Type  | Function</p>
+</div></blockquote>
+<dl class="simple">
+<dt>:—-:<a href="#id48"><span class="problematic" id="id49">|:------:|</span></a>————————————————————–</dt><dd><p>time | string | UTC time of pkt RX, us precision, ISO 8601 ‘compact’ format
+tmms | number | GPS time of pkt RX, number of milliseconds since 06.Jan.1980
+tmst | number | Internal timestamp of “RX finished” event (32b unsigned)
+freq | number | RX central frequency in MHz (unsigned float, Hz precision)
+chan | number | Concentrator “IF” channel used for RX (unsigned integer)
+rfch | number | Concentrator “RF chain” used for RX (unsigned integer)
+stat | number | CRC status: 1 = OK, -1 = fail, 0 = no CRC
+modu | string | Modulation identifier “LORA” or “FSK”
+datr | string | LoRa datarate identifier (eg. SF12BW500)
+datr | number | FSK datarate (unsigned, in bits per second)
+codr | string | LoRa ECC coding rate identifier
+rssi | number | RSSI in dBm (signed integer, 1 dB precision)
+lsnr | number | Lora SNR ratio in dB (signed float, 0.1 dB precision)
+size | number | RF packet payload size in bytes (unsigned integer)
+data | string | Base64 encoded RF packet payload, padded</p>
+</dd>
+</dl>
+<p>Example (white-spaces, indentation and newlines added for readability):</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;rxpk&quot;</span><span class="p">:[</span>
+<span class="w">     </span><span class="p">{</span>
+<span class="w">             </span><span class="nt">&quot;time&quot;</span><span class="p">:</span><span class="s2">&quot;2013-03-31T16:21:17.528002Z&quot;</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;tmst&quot;</span><span class="p">:</span><span class="mi">3512348611</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;chan&quot;</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;rfch&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;freq&quot;</span><span class="p">:</span><span class="mf">866.349812</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;stat&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;modu&quot;</span><span class="p">:</span><span class="s2">&quot;LORA&quot;</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;datr&quot;</span><span class="p">:</span><span class="s2">&quot;SF7BW125&quot;</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;codr&quot;</span><span class="p">:</span><span class="s2">&quot;4/6&quot;</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;rssi&quot;</span><span class="p">:</span><span class="mi">-35</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;lsnr&quot;</span><span class="p">:</span><span class="mf">5.1</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;size&quot;</span><span class="p">:</span><span class="mi">32</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="s2">&quot;-DS4CGaDCdG+48eJNM3Vai-zDpsR71Pn9CPA9uCON84&quot;</span>
+<span class="w">     </span><span class="p">},{</span>
+<span class="w">             </span><span class="nt">&quot;time&quot;</span><span class="p">:</span><span class="s2">&quot;2013-03-31T16:21:17.530974Z&quot;</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;tmst&quot;</span><span class="p">:</span><span class="mi">3512348514</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;chan&quot;</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;rfch&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;freq&quot;</span><span class="p">:</span><span class="mf">869.1</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;stat&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;modu&quot;</span><span class="p">:</span><span class="s2">&quot;FSK&quot;</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;datr&quot;</span><span class="p">:</span><span class="mi">50000</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;rssi&quot;</span><span class="p">:</span><span class="mi">-75</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;size&quot;</span><span class="p">:</span><span class="mi">16</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="s2">&quot;VEVTVF9QQUNLRVRfMTIzNA==&quot;</span>
+<span class="w">     </span><span class="p">},{</span>
+<span class="w">             </span><span class="nt">&quot;time&quot;</span><span class="p">:</span><span class="s2">&quot;2013-03-31T16:21:17.532038Z&quot;</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;tmst&quot;</span><span class="p">:</span><span class="mi">3316387610</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;chan&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;rfch&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;freq&quot;</span><span class="p">:</span><span class="mf">863.00981</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;stat&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;modu&quot;</span><span class="p">:</span><span class="s2">&quot;LORA&quot;</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;datr&quot;</span><span class="p">:</span><span class="s2">&quot;SF10BW125&quot;</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;codr&quot;</span><span class="p">:</span><span class="s2">&quot;4/7&quot;</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;rssi&quot;</span><span class="p">:</span><span class="mi">-38</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;lsnr&quot;</span><span class="p">:</span><span class="mf">5.5</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;size&quot;</span><span class="p">:</span><span class="mi">32</span><span class="p">,</span>
+<span class="w">             </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="s2">&quot;ysgRl452xNLep9S1NTIg2lomKDxUgn3DJ7DE+b00Ass&quot;</span>
+<span class="w">     </span><span class="p">}</span>
+<span class="p">]}</span>
+</pre></div>
+</div>
+<p>The root object can also contain an object named “stat” :</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">     </span><span class="nt">&quot;rxpk&quot;</span><span class="p">:[</span><span class="w"> </span><span class="p">{</span><span class="err">...</span><span class="p">},</span><span class="w"> </span><span class="err">...</span><span class="p">],</span>
+<span class="w">     </span><span class="nt">&quot;stat&quot;</span><span class="p">:{</span><span class="err">...</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>It is possible for a packet to contain no “rxpk” array but a “stat” object.</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">     </span><span class="nt">&quot;stat&quot;</span><span class="p">:{</span><span class="err">...</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>That object contains the status of the gateway, with the following fields:</p>
+<blockquote>
+<div><p>Name |  Type  | Function</p>
+</div></blockquote>
+<dl class="simple">
+<dt>:—-:<a href="#id50"><span class="problematic" id="id51">|:------:|</span></a>————————————————————–</dt><dd><p>time | string | UTC ‘system’ time of the gateway, ISO 8601 ‘expanded’ format
+lati | number | GPS latitude of the gateway in degree (float, N is +)
+long | number | GPS latitude of the gateway in degree (float, E is +)
+alti | number | GPS altitude of the gateway in meter RX (integer)
+rxnb | number | Number of radio packets received (unsigned integer)
+rxok | number | Number of radio packets received with a valid PHY CRC
+rxfw | number | Number of radio packets forwarded (unsigned integer)
+ackr | number | Percentage of upstream datagrams that were acknowledged
+dwnb | number | Number of downlink datagrams received (unsigned integer)
+txnb | number | Number of packets emitted (unsigned integer)</p>
+</dd>
+</dl>
+<p>Example (white-spaces, indentation and newlines added for readability):</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;stat&quot;</span><span class="p">:{</span>
+<span class="w">     </span><span class="nt">&quot;time&quot;</span><span class="p">:</span><span class="s2">&quot;2014-01-12 08:59:28 GMT&quot;</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;lati&quot;</span><span class="p">:</span><span class="mf">46.24000</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;long&quot;</span><span class="p">:</span><span class="mf">3.25230</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;alti&quot;</span><span class="p">:</span><span class="mi">145</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;rxnb&quot;</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;rxok&quot;</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;rxfw&quot;</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;ackr&quot;</span><span class="p">:</span><span class="mf">100.0</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;dwnb&quot;</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;txnb&quot;</span><span class="p">:</span><span class="mi">2</span>
+<span class="p">}}</span>
+</pre></div>
+</div>
+</section>
+<section id="downstream-protocol">
+<h2>1. Downstream protocol<a class="headerlink" href="#downstream-protocol" title="Link to this heading"></a></h2>
+<section id="id13">
+<h3>5.1. Sequence diagram ###<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p>+———+                                                    +———+
+| Gateway |                                                    | Server  |
++———+                                                    +———+</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">———————————–                        |</div>
+</div>
+<p><a href="#id52"><span class="problematic" id="id53">|-|</span></a> Every N seconds (keepalive time) |                         |
+| ————————————                         |
+|                                                              |
+| PULL_DATA (token Y, MAC&#64;)                                    |
+<a href="#id54"><span class="problematic" id="id55">|-------------------------------------------------------------&gt;|</span></a>
+|                                                              |
+|                                           PULL_ACK (token Y) |
+<a href="#id56"><span class="problematic" id="id57">|&lt;-------------------------------------------------------------|</span></a>
+|                                                              |</p>
+</div></blockquote>
+<p>+———+                                                    +———+
+| Gateway |                                                    | Server  |
++———+                                                    +———+</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">——————————————————|</div>
+<div class="line">| Anytime after first PULL_DATA for each packet to TX <a href="#id58"><span class="problematic" id="id59">|-|</span></a></div>
+<div class="line">——————————————————- |</div>
+<div class="line-block">
+<div class="line-block">
+<div class="line"><a href="#id14"><span class="problematic" id="id15">|</span></a></div>
+</div>
+<div class="line">PULL_RESP (token Z, JSON payload) |</div>
+</div>
+</div>
+<p><a href="#id60"><span class="problematic" id="id61">|&lt;-------------------------------------------------------------|</span></a>
+|                                                              |
+| TX_ACK (token Z, JSON payload)                               |
+<a href="#id62"><span class="problematic" id="id63">|-------------------------------------------------------------&gt;|</span></a></p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="pull-data-packet">
+<h3>5.2. PULL_DATA packet ###<a class="headerlink" href="#pull-data-packet" title="Link to this heading"></a></h3>
+<p>That packet type is used by the gateway to poll data from the server.</p>
+<p>This data exchange is initialized by the gateway because it might be
+impossible for the server to send packets to the gateway if the gateway is
+behind a NAT.</p>
+<p>When the gateway initialize the exchange, the network route towards the
+server will open and will allow for packets to flow both directions.
+The gateway must periodically send PULL_DATA packets to be sure the network
+route stays open for the server to be used at any time.</p>
+<blockquote>
+<div><p>Bytes  | Function</p>
+</div></blockquote>
+<dl class="simple">
+<dt>:——:<a href="#id16"><span class="problematic" id="id17">|</span></a>———————————————————————</dt><dd><p>0      | protocol version = 2
+1-2    | random token
+3      | PULL_DATA identifier 0x02
+4-11   | Gateway unique identifier (MAC address)</p>
+</dd>
+</dl>
+</section>
+<section id="pull-ack-packet">
+<h3>5.3. PULL_ACK packet ###<a class="headerlink" href="#pull-ack-packet" title="Link to this heading"></a></h3>
+<p>That packet type is used by the server to confirm that the network route is
+open and that the server can send PULL_RESP packets at any time.</p>
+<blockquote>
+<div><p>Bytes  | Function</p>
+</div></blockquote>
+<dl class="simple">
+<dt>:——:<a href="#id18"><span class="problematic" id="id19">|</span></a>———————————————————————</dt><dd><p>0      | protocol version = 2
+1-2    | same token as the PULL_DATA packet to acknowledge
+3      | PULL_ACK identifier 0x04</p>
+</dd>
+</dl>
+</section>
+<section id="pull-resp-packet">
+<h3>5.4. PULL_RESP packet ###<a class="headerlink" href="#pull-resp-packet" title="Link to this heading"></a></h3>
+<p>That packet type is used by the server to send RF packets and associated
+metadata that will have to be emitted by the gateway.</p>
+<blockquote>
+<div><p>Bytes  | Function</p>
+</div></blockquote>
+<dl class="simple">
+<dt>:——:<a href="#id20"><span class="problematic" id="id21">|</span></a>———————————————————————</dt><dd><p>0      | protocol version = 2
+1-2    | random token
+3      | PULL_RESP identifier 0x03
+4-end  | JSON object, starting with {, ending with }, see section 6</p>
+</dd>
+</dl>
+</section>
+<section id="tx-ack-packet">
+<h3>5.5. TX_ACK packet ###<a class="headerlink" href="#tx-ack-packet" title="Link to this heading"></a></h3>
+<p>That packet type is used by the gateway to send a feedback to the server
+to inform if a downlink request has been accepted or rejected by the gateway.
+The datagram may optionnaly contain a JSON string to give more details on
+acknoledge. If no JSON is present (empty string), this means than no error
+occured.</p>
+<blockquote>
+<div><p>Bytes  | Function</p>
+</div></blockquote>
+<dl class="simple">
+<dt>:——:<a href="#id22"><span class="problematic" id="id23">|</span></a>———————————————————————</dt><dd><p>0      | protocol version = 2
+1-2    | same token as the PULL_RESP packet to acknowledge
+3      | TX_ACK identifier 0x05
+4-11   | Gateway unique identifier (MAC address)
+12-end | [optional] JSON object, starting with {, ending with }, see section 6</p>
+</dd>
+</dl>
+</section>
+</section>
+<section id="downstream-json-data-structure">
+<h2>1. Downstream JSON data structure<a class="headerlink" href="#downstream-json-data-structure" title="Link to this heading"></a></h2>
+<p>The root object of PULL_RESP packet must contain an object named “txpk”:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">     </span><span class="nt">&quot;txpk&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="err">...</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>That object contain a RF packet to be emitted and associated metadata with the following fields:</p>
+<blockquote>
+<div><p>Name |  Type  | Function</p>
+</div></blockquote>
+<dl class="simple">
+<dt>:—-:<a href="#id64"><span class="problematic" id="id65">|:------:|</span></a>————————————————————–</dt><dd><p>imme | bool   | Send packet immediately (will ignore tmst &amp; time)
+tmst | number | Send packet on a certain timestamp value (will ignore time)
+tmms | number | Send packet at a certain GPS time (GPS synchronization required)
+freq | number | TX central frequency in MHz (unsigned float, Hz precision)
+rfch | number | Concentrator “RF chain” used for TX (unsigned integer)
+powe | number | TX output power in dBm (unsigned integer, dBm precision)
+modu | string | Modulation identifier “LORA” or “FSK”
+datr | string | LoRa datarate identifier (eg. SF12BW500)
+datr | number | FSK datarate (unsigned, in bits per second)
+codr | string | LoRa ECC coding rate identifier
+fdev | number | FSK frequency deviation (unsigned integer, in Hz)
+ipol | bool   | Lora modulation polarization inversion
+prea | number | RF preamble size (unsigned integer)
+size | number | RF packet payload size in bytes (unsigned integer)
+data | string | Base64 encoded RF packet payload, padding optional
+ncrc | bool   | If true, disable the CRC of the physical layer (optional)</p>
+</dd>
+</dl>
+<p>Most fields are optional.
+If a field is omitted, default parameters will be used.</p>
+<p>Examples (white-spaces, indentation and newlines added for readability):</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;txpk&quot;</span><span class="p">:{</span>
+<span class="w">     </span><span class="nt">&quot;imme&quot;</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;freq&quot;</span><span class="p">:</span><span class="mf">864.123456</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;rfch&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;powe&quot;</span><span class="p">:</span><span class="mi">14</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;modu&quot;</span><span class="p">:</span><span class="s2">&quot;LORA&quot;</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;datr&quot;</span><span class="p">:</span><span class="s2">&quot;SF11BW125&quot;</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;codr&quot;</span><span class="p">:</span><span class="s2">&quot;4/6&quot;</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;ipol&quot;</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;size&quot;</span><span class="p">:</span><span class="mi">32</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="s2">&quot;H3P3N2i9qc4yt7rK7ldqoeCVJGBybzPY5h1Dd7P7p8v&quot;</span>
+<span class="p">}}</span>
+</pre></div>
+</div>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;txpk&quot;</span><span class="p">:{</span>
+<span class="w">     </span><span class="nt">&quot;imme&quot;</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;freq&quot;</span><span class="p">:</span><span class="mf">861.3</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;rfch&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;powe&quot;</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;modu&quot;</span><span class="p">:</span><span class="s2">&quot;FSK&quot;</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;datr&quot;</span><span class="p">:</span><span class="mi">50000</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;fdev&quot;</span><span class="p">:</span><span class="mi">3000</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;size&quot;</span><span class="p">:</span><span class="mi">32</span><span class="p">,</span>
+<span class="w">     </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="s2">&quot;H3P3N2i9qc4yt7rK7ldqoeCVJGBybzPY5h1Dd7P7p8v&quot;</span>
+<span class="p">}}</span>
+</pre></div>
+</div>
+<p>The root object of TX_ACK packet must contain an object named “txpk_ack”:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">     </span><span class="nt">&quot;txpk_ack&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="err">...</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>That object contain status information concerning the associated PULL_RESP packet.</p>
+<blockquote>
+<div><p>Name |  Type  | Function</p>
+</div></blockquote>
+<p>:—-:<a href="#id66"><span class="problematic" id="id67">|:------:|</span></a>——————————————————————————
+error | string | Indication about success or type of failure that occured for downlink request.</p>
+<p>The possible values of “error” field are:</p>
+<blockquote>
+<div><p>Value             | Definition</p>
+</div></blockquote>
+<dl class="simple">
+<dt>:—————–:<a href="#id24"><span class="problematic" id="id25">|</span></a>———————————————————————</dt><dd><p>NONE              | Packet has been programmed for downlink
+TOO_LATE          | Rejected because it was already too late to program this packet for downlink
+TOO_EARLY         | Rejected because downlink packet timestamp is too much in advance
+COLLISION_PACKET  | Rejected because there was already a packet programmed in requested timeframe
+COLLISION_BEACON  | Rejected because there was already a beacon planned in requested timeframe
+TX_FREQ           | Rejected because requested frequency is not supported by TX RF chain
+TX_POWER          | Rejected because requested power is not supported by gateway
+GPS_UNLOCKED      | Rejected because GPS is unlocked, so GPS timestamp cannot be used</p>
+</dd>
+</dl>
+<p>Examples (white-spaces, indentation and newlines added for readability):</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;txpk_ack&quot;</span><span class="p">:{</span>
+<span class="w">     </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="s2">&quot;COLLISION_PACKET&quot;</span>
+<span class="p">}}</span>
+</pre></div>
+</div>
+</section>
+<section id="revisions">
+<h2>1. Revisions<a class="headerlink" href="#revisions" title="Link to this heading"></a></h2>
+<section id="v1-4">
+<h3>v1.4 ###<a class="headerlink" href="#v1-4" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Added “tmms” field for GPS time as a monotonic number of milliseconds</p></li>
+</ul>
+<p>ellapsed since January 6th, 1980 (GPS Epoch). No leap second.</p>
+</section>
+<section id="v1-3">
+<h3>v1.3 ###<a class="headerlink" href="#v1-3" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Added downlink feedback from gateway to server (PULL_RESP -&gt; TX_ACK)</p></li>
+</ul>
+</section>
+<section id="v1-2">
+<h3>v1.2 ###<a class="headerlink" href="#v1-2" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Added value of FSK bitrate for upstream.</p></li>
+<li><p>Added parameters for FSK bitrate and frequency deviation for downstream.</p></li>
+</ul>
+</section>
+<section id="v1-1">
+<h3>v1.1 ###<a class="headerlink" href="#v1-1" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Added syntax for status report JSON object on upstream.</p></li>
+</ul>
+</section>
+<section id="v1-0">
+<h3>v1.0 ###<a class="headerlink" href="#v1-0" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Initial version.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, skerlan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

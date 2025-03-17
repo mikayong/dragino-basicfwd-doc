@@ -1,0 +1,235 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Concentrator Design (Corecell) &mdash; basicdocs 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="_static/doctools.js?v=888ff710"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            basicdocs
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Concentrator Design (Corecell)</a><ul>
+<li><a class="reference internal" href="#conf-object">CONF Object</a></li>
+<li><a class="reference internal" href="#rfconf-object">RFCONF Object</a></li>
+<li><a class="reference internal" href="#tx-gain-lut-object">TX_GAIN_LUT Object</a></li>
+<li><a class="reference internal" href="#rsssi-tcomp-object">RSSSI_TCOMP Object</a></li>
+<li><a class="reference internal" href="#single-board-sample-configuration">Single-Board Sample Configuration</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">basicdocs</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Concentrator Design (Corecell)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/concentrator-design.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="concentrator-design-corecell">
+<h1>Concentrator Design (Corecell)<a class="headerlink" href="#concentrator-design-corecell" title="Link to this heading"></a></h1>
+<p>LoRa Basics™ Station supports the Semtech concentrator reference design <a class="reference external" href="https://www.semtech.com/products/wireless-rf/lora-gateways/sx1302cxxxgw1">SX1302CxxxGW1 (Corecell)</a> as a compile-time option.  The JSON configuration is very similar to the <a class="reference external" href="https://github.com/Lora-net/sx1302_hal/tree/master/packet_forwarder">Semtech SX1302 Packet Forwarder</a>.</p>
+<p>Currently, support for the Corecell design comes in single-board compile-time variants.</p>
+<p>Stations can also contain a statically-linked version of the <a class="reference external" href="https://github.com/Lora-net/sx1302_hal/tree/master/libloragw">lora_gateway library</a>, so it can interact with the concentrator boards.</p>
+<p>This topic lists the available object types and fields, with their possible values, as understood by a Station when parsing configuration files.  The semantics of the fields is discussed in the documentation for each of the respective radio boards.  Only the additional fields or extensions specific to the Station are briefly explained here.</p>
+<p>A configuration need not specify any frequencies or enablement for <code class="docutils literal notranslate"><span class="pre">RFCONF</span></code> objects.  This information is submitted by the LNS based on the channel plan assigned to a gateway.  The channel-plan settings are merged with the local configuration before the concentrator board is initialized.</p>
+<p>The concentrator configuration is embedded in the <code class="docutils literal notranslate"><span class="pre">station.conf</span></code> files in the following way:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="p">...</span><span class="w">                    </span><span class="c1">// possibly other fields e.g. &quot;station_conf&quot;</span>
+<span class="w">  </span><span class="s2">&quot;radio_conf&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">CONF</span>
+<span class="w">  </span><span class="s2">&quot;sx130x_conf&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">CONF</span><span class="w">   </span><span class="c1">// alias for radio_conf</span>
+<span class="w">  </span><span class="s2">&quot;SX130x_conf&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">CONF</span><span class="w">   </span><span class="c1">// alias for radio_conf</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<section id="conf-object">
+<h2>CONF Object<a class="headerlink" href="#conf-object" title="Link to this heading"></a></h2>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;device&quot;</span><span class="w">        </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span><span class="w">   </span><span class="c1">// station-specific</span>
+<span class="w">  </span><span class="s2">&quot;pps&quot;</span><span class="w">           </span><span class="o">:</span><span class="w"> </span><span class="nx">BOOL</span><span class="w">     </span><span class="c1">// station-specific</span>
+<span class="w">  </span><span class="s2">&quot;lorawan_public&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">BOOL</span>
+<span class="w">  </span><span class="s2">&quot;clksrc&quot;</span><span class="w">        </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="s2">&quot;antenna_gain&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="s2">&quot;full_duplex&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="nx">BOOL</span>
+<span class="w">  </span><span class="s2">&quot;radio_0&quot;</span><span class="w">       </span><span class="o">:</span><span class="w"> </span><span class="nx">RFCONF</span>
+<span class="w">  </span><span class="s2">&quot;radio_1&quot;</span><span class="w">       </span><span class="o">:</span><span class="w"> </span><span class="nx">RFCONF</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">device</span></code> field specifies the device path that is used to communicate with the radio board. The device path can be prefixed with <code class="docutils literal notranslate"><span class="pre">spi:</span></code> or <code class="docutils literal notranslate"><span class="pre">usb:</span></code> to select SPI or USB as communication type. By default, SPI communication is assumed. If multiple radio boards are used, the wildcard character (<code class="docutils literal notranslate"><span class="pre">?</span></code>) is replaced with the actual board index.  The board index is inferred from the name of the slave configuration file <code class="docutils literal notranslate"><span class="pre">slave-N.conf</span></code>.</p>
+<p>If the gateway has a PPS (for example, a GPS device or some other source), the concentrator board that has access to this signal must have the <code class="docutils literal notranslate"><span class="pre">pps</span></code> field set to <em>true</em>.  One and only one board must have this field set to <em>true</em>.</p>
+<p>Station targets a specific output power to be dissipated.  The value of the <code class="docutils literal notranslate"><span class="pre">antenna_gain</span></code> field is subtracted from this target value to account for any gains by the antenna and any losses by the cable.</p>
+<p>Currently <code class="docutils literal notranslate"><span class="pre">full_duplex</span></code> needs to be set to <em>false</em> because it is not being validated by lora_gateway library.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Stations do not require access to a GPS device to maintain a global GPS time for Class B operations.  A PPS, aligned with the GPS time, is sufficient.</p>
+</div>
+</section>
+<section id="rfconf-object">
+<h2>RFCONF Object<a class="headerlink" href="#rfconf-object" title="Link to this heading"></a></h2>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;type&quot;</span><span class="w">          </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;SX1250&quot;</span>
+<span class="w">  </span><span class="s2">&quot;tx_enable&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">BOOL</span>
+<span class="w">  </span><span class="s2">&quot;freq&quot;</span><span class="w">          </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="s2">&quot;rssi_offset&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="s2">&quot;rssi_tcomp&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nx">RSSSI_TCOMP</span><span class="p">,</span><span class="w"> </span><span class="p">..</span><span class="w"> </span><span class="p">]</span>
+<span class="w">  </span><span class="s2">&quot;tx_gain_lut&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nx">TX_GAIN_LUT</span><span class="p">,</span><span class="w"> </span><span class="p">..</span><span class="w"> </span><span class="p">]</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="tx-gain-lut-object">
+<h2>TX_GAIN_LUT Object<a class="headerlink" href="#tx-gain-lut-object" title="Link to this heading"></a></h2>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;rf_power&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">[</span><span class="o">-</span><span class="mf">128..127</span><span class="p">]</span>
+<span class="w">  </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">[</span><span class="mf">0..1</span><span class="p">]</span>
+<span class="w">  </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">[</span><span class="mf">1..22</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="rsssi-tcomp-object">
+<h2>RSSSI_TCOMP Object<a class="headerlink" href="#rsssi-tcomp-object" title="Link to this heading"></a></h2>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;coeff_a&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="s2">&quot;coeff_b&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="s2">&quot;coeff_c&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="s2">&quot;coeff_d&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="s2">&quot;coeff_e&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>All of the <code class="docutils literal notranslate"><span class="pre">RFCONF</span></code> fields are optional.  Absent fields are read as <em>false</em> or 0.  If <code class="docutils literal notranslate"><span class="pre">type</span></code> is absent, the value is undefined.</p>
+</section>
+<section id="single-board-sample-configuration">
+<h2>Single-Board Sample Configuration<a class="headerlink" href="#single-board-sample-configuration" title="Link to this heading"></a></h2>
+<p>Here is a sample configuration for a single board:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="p">...</span>
+<span class="w">   </span><span class="s2">&quot;radio_conf&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w">                  </span><span class="cm">/* Actual channel plan is controlled by the server */</span>
+<span class="w">       </span><span class="s2">&quot;lorawan_public&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">      </span><span class="cm">/* is default */</span>
+<span class="w">       </span><span class="s2">&quot;clksrc&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w">                 </span><span class="cm">/* radio_0 provides clock to concentrator */</span>
+<span class="w">       </span><span class="s2">&quot;device&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;spidev&quot;</span><span class="p">,</span><span class="w">          </span><span class="cm">/* default SPI device is platform specific */</span>
+<span class="w">       </span><span class="s2">&quot;antenna_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w">           </span><span class="cm">/* antenna gain, in dBi */</span>
+<span class="w">       </span><span class="s2">&quot;full_duplex&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">           </span><span class="s2">&quot;radio_0&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">               </span><span class="cm">/* freq/enable provided by LNS - only hardware-specific settings are listed here */</span>
+<span class="w">               </span><span class="s2">&quot;type&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;SX1250&quot;</span><span class="p">,</span>
+<span class="w">               </span><span class="s2">&quot;rssi_offset&quot;</span><span class="o">:</span><span class="w"> </span><span class="o">-</span><span class="mf">215.4</span><span class="p">,</span>
+<span class="w">           </span><span class="s2">&quot;rssi_tcomp&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="s2">&quot;coeff_a&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;coeff_b&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;coeff_c&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">20.41</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;coeff_d&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">2162.56</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;coeff_e&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">},</span>
+<span class="w">               </span><span class="s2">&quot;tx_enable&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">               </span><span class="s2">&quot;tx_gain_lut&quot;</span><span class="o">:</span><span class="p">[</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">12</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">15</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">13</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">16</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">14</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">17</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">15</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">19</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">16</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">20</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">17</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">22</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">18</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">19</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">2</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">20</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">3</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">21</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">4</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">22</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">5</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">23</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">6</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">24</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">7</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">25</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">9</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">26</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">11</span><span class="p">},</span>
+<span class="w">                   </span><span class="p">{</span><span class="s2">&quot;rf_power&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">27</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pa_gain&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pwr_idx&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">14</span><span class="p">}</span>
+<span class="w">               </span><span class="p">]</span>
+<span class="w">           </span><span class="p">},</span>
+<span class="w">   </span><span class="s2">&quot;radio_1&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">           </span><span class="s2">&quot;type&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;SX1250&quot;</span><span class="p">,</span>
+<span class="w">           </span><span class="s2">&quot;rssi_offset&quot;</span><span class="o">:</span><span class="w"> </span><span class="o">-</span><span class="mf">215.4</span><span class="p">,</span>
+<span class="w">           </span><span class="s2">&quot;rssi_tcomp&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="s2">&quot;coeff_a&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;coeff_b&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;coeff_c&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">20.41</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;coeff_d&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">2162.56</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;coeff_e&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">},</span>
+<span class="w">           </span><span class="s2">&quot;tx_enable&quot;</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">       </span><span class="p">}</span>
+<span class="w">       </span><span class="cm">/* chan_multiSF_X, chan_Lora_std, chan_FSK provided by LNS */</span>
+<span class="w">   </span><span class="p">}</span>
+<span class="w">   </span><span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The configuration contains only board-specific settings.  All parameters related to a channel plan are omitted because they are provided by the LNS and are merged on the fly.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, skerlan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

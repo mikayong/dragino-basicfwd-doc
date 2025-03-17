@@ -1,0 +1,590 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The LNS Protocol &mdash; basicdocs 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="_static/doctools.js?v=888ff710"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            basicdocs
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">The LNS Protocol</a><ul>
+<li><a class="reference internal" href="#querying-the-lns-connection-endpoint-discovery">Querying the LNS Connection endpoint (Discovery)</a></li>
+<li><a class="reference internal" href="#connecting-to-an-lns">Connecting to an LNS</a><ul>
+<li><a class="reference internal" href="#version-message"><em>version</em> Message</a></li>
+<li><a class="reference internal" href="#router-config-message"><em>router_config</em> Message</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#uplink-messages">Uplink Messages</a><ul>
+<li><a class="reference internal" href="#radio-metadata">Radio Metadata</a></li>
+<li><a class="reference internal" href="#lorawan-join-requests">LoRaWAN Join Requests</a></li>
+<li><a class="reference internal" href="#lorawan-data-frames">LoRaWAN Data Frames</a></li>
+<li><a class="reference internal" href="#lorawan-proprietary-frames">LoRaWAN Proprietary Frames</a></li>
+<li><a class="reference internal" href="#transmit-confirmation">Transmit Confirmation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#downlink-messages">Downlink Messages</a><ul>
+<li><a class="reference internal" href="#single-frame-downlink">Single Frame Downlink</a></li>
+<li><a class="reference internal" href="#multicast-schedule">Multicast Schedule</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#monitoring-round-trip-times">Monitoring Round-trip Times</a></li>
+<li><a class="reference internal" href="#time-synchronization">Time Synchronization</a><ul>
+<li><a class="reference internal" href="#synchronizing-pps-to-gps-time">Synchronizing PPS to GPS Time</a></li>
+<li><a class="reference internal" href="#transferring-gps-time">Transferring GPS Time</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#remote-commands">Remote Commands</a></li>
+<li><a class="reference internal" href="#remote-shell">Remote Shell</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">basicdocs</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">The LNS Protocol</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/lns-protocol.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="the-lns-protocol">
+<h1>The LNS Protocol<a class="headerlink" href="#the-lns-protocol" title="Link to this heading"></a></h1>
+<p>Connecting a LoRa Basics™ Station to a LoRaWAN® Network Server (LNS) is a two-step process which uses WebSocket as transport protocol for exchanging text records containing JSON-encoded objects.</p>
+<p>First, the Station queries the LNS for the URI of the actual connection endpoint of the LNS.  Second, it establishes a data connection with that endpoint to receive setup information. From then on, LoRa® uplink and downlink frames are exchanged through that connection.  This way, an LNS may dynamically assign gateways to different data connection endpoints in order to, for example, distribute load or favor geographical proximity.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The LNS service assigning data connection endpoints can be separate from the LNS. Also, the service can run on servers separate from the LNS connection endpoints, which may be distributed across different servers.</p>
+</div>
+<a class="reference internal image-reference" href="images/station-tcproto.svg"><img alt="LNS Protocol" class="align-center" src="images/station-tcproto.svg" width="90%" /></a>
+<section id="querying-the-lns-connection-endpoint-discovery">
+<h2>Querying the LNS Connection endpoint (Discovery)<a class="headerlink" href="#querying-the-lns-connection-endpoint-discovery" title="Link to this heading"></a></h2>
+<p>By default, the URI of the initial query is constructed from the contents of the file <code class="docutils literal notranslate"><span class="pre">tc.uri</span></code> by appending the path <code class="docutils literal notranslate"><span class="pre">/router-info</span></code> (see <a class="reference internal" href="credentials.html"><span class="doc">Credentials</span></a> for other options).  This forms a WebSocket endpoint to which the following JSON object is submitted:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;router&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">ID6</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">EUI</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">integer</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Here the Station is simply declaring its identity and asking for directions regarding the LNS connection endpoint it shall connect to.  The identity is a 64-bit EUI provided in the field <code class="docutils literal notranslate"><span class="pre">router</span></code>, either in the form of a string encoding the EUI in <span class="xref std std-term">ID6</span> or <span class="xref std std-term">EUI</span> format, or as an integer value representing the EUI.</p>
+<p>Depending on the authorization scheme (see <span class="xref std std-doc">authmodes</span>), the LNS shall verify that the declared identity matches the supplied credentials and shall answer with the following JSON object, immediately closing the connection afterwards:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;router&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">ID6</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;muxs&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">ID6</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;uri&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;URI&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;error&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span><span class="w">   </span><span class="c1">// only in case of error</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The field <code class="docutils literal notranslate"><span class="pre">router</span></code> contains the normalized gateway identity. The <code class="docutils literal notranslate"><span class="pre">muxs</span></code> field contains the identity of the LNS connection endpoint selected by the LNS, and the field <code class="docutils literal notranslate"><span class="pre">uri</span></code> contains the address of this connection endpoint. The Station then connects to this URI to establish a data connection with the LNS.</p>
+<p>If the gateway cannot be identified, or if there are other problems, the response object contains an <code class="docutils literal notranslate"><span class="pre">error</span></code> field describing the problem.  It may be that the fields <code class="docutils literal notranslate"><span class="pre">muxs</span></code> and <code class="docutils literal notranslate"><span class="pre">uri</span></code> are missing.</p>
+</section>
+<section id="connecting-to-an-lns">
+<h2>Connecting to an LNS<a class="headerlink" href="#connecting-to-an-lns" title="Link to this heading"></a></h2>
+<p>After a successful query of the LNS data connection endpoint, the Station will connect to the endpoint URI it obtained, using the currently-configured credentials.  As mentioned before, the established link is a WebSocket that connects the Station and LNS exchange JSON objects.  Each JSON object, whether an uplink (i.e., from Station to LNS) or a downlink (i.e., from LNS to Station), must have a field named <code class="docutils literal notranslate"><span class="pre">msgtype</span></code> which identifies the type of message and determines the structure of the JSON object.</p>
+<p>Right after the WebSocket connection has been established, the Station sends a <code class="docutils literal notranslate"><span class="pre">version</span></code> message. Next, the LNS shall respond with a <code class="docutils literal notranslate"><span class="pre">router_config</span></code> message.  Afterwards, normal operation begins with uplink/downlink messages as described below.</p>
+<section id="version-message">
+<h3><em>version</em> Message<a class="headerlink" href="#version-message" title="Link to this heading"></a></h3>
+<p>The first message sent by the Station is a <code class="docutils literal notranslate"><span class="pre">version</span></code> message which reports its version information to the LNS (i.e., <code class="docutils literal notranslate"><span class="pre">station</span></code>, <code class="docutils literal notranslate"><span class="pre">firmware</span></code>, <code class="docutils literal notranslate"><span class="pre">model</span></code>), the protocol version (the constant <code class="docutils literal notranslate"><span class="pre">2</span></code>, for now), and a list of optional features supported by the gateway. That is:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;version&quot;</span>
+<span class="w">  </span><span class="s2">&quot;station&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span>
+<span class="w">  </span><span class="s2">&quot;firmware&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span>
+<span class="w">  </span><span class="s2">&quot;package&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span>
+<span class="w">  </span><span class="s2">&quot;model&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span>
+<span class="w">  </span><span class="s2">&quot;protocol&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="s2">&quot;features&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">features</span></code> string is space-separated list of some of the following keywords:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rmtsh</span></code>:
+The Station supports remote-shell access through the WebSocket link established with the LNS.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">prod</span></code>:
+The Station has been built at production level, that is, certain testing and debugging features may be disabled.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gps</span></code>
+The Station has access to a GPS device.</p></li>
+</ul>
+</section>
+<section id="router-config-message">
+<h3><em>router_config</em> Message<a class="headerlink" href="#router-config-message" title="Link to this heading"></a></h3>
+<p>The LNS SHALL respond to a <code class="docutils literal notranslate"><span class="pre">version</span></code> message with a <code class="docutils literal notranslate"><span class="pre">router_config</span></code> message to specify a channel plan for the Station and define some basic operation modes:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;router_config&quot;</span>
+<span class="w">  </span><span class="s2">&quot;NetID&quot;</span><span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span><span class="w"> </span><span class="p">..</span><span class="w"> </span><span class="p">]</span>
+<span class="w">  </span><span class="s2">&quot;JoinEui&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">[</span><span class="nx">INT</span><span class="p">,</span><span class="nx">INT</span><span class="p">],</span><span class="w"> </span><span class="p">..</span><span class="w"> </span><span class="p">]</span><span class="w">  </span><span class="c1">// ranges: beg,end inclusive</span>
+<span class="w">  </span><span class="s2">&quot;region&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span><span class="w">             </span><span class="c1">// optional, e.g. &quot;EU868&quot;, &quot;US915&quot;, ..</span>
+<span class="w">  </span><span class="s2">&quot;max_eirp&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="nx">FLOAT</span><span class="w">              </span><span class="c1">// optional</span>
+<span class="w">  </span><span class="s2">&quot;hwspec&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span>
+<span class="w">  </span><span class="s2">&quot;freq_range&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span><span class="w"> </span><span class="nx">INT</span><span class="w"> </span><span class="p">]</span><span class="w">       </span><span class="c1">// min, max (hz)</span>
+<span class="w">  </span><span class="s2">&quot;DRs&quot;</span><span class="w">        </span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">[</span><span class="nx">INT</span><span class="p">,</span><span class="nx">INT</span><span class="p">,</span><span class="nx">INT</span><span class="p">],</span><span class="w"> </span><span class="p">..</span><span class="w"> </span><span class="p">]</span><span class="w">   </span><span class="c1">// sf,bw,dnonly</span>
+<span class="w">  </span><span class="s2">&quot;sx1301_conf&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nx">SX1301CONF</span><span class="p">,</span><span class="w"> </span><span class="p">..</span><span class="w"> </span><span class="p">]</span>
+<span class="w">  </span><span class="s2">&quot;bcning&quot;</span><span class="o">:</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">BCNCONF</span>
+<span class="w">  </span><span class="s2">&quot;nocca&quot;</span><span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="nx">BOOL</span>
+<span class="w">  </span><span class="s2">&quot;nodc&quot;</span><span class="w">       </span><span class="o">:</span><span class="w"> </span><span class="nx">BOOL</span>
+<span class="w">  </span><span class="s2">&quot;nodwell&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">BOOL</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The fields <code class="docutils literal notranslate"><span class="pre">NetID</span></code> and <code class="docutils literal notranslate"><span class="pre">JoinEui</span></code> are used to filter LoRa frames received by the Station.  <code class="docutils literal notranslate"><span class="pre">NetID</span></code> is a list of NetID values that are accepted.  Any LoRa data frame carrying a NetID other than those listed will be dropped.  <code class="docutils literal notranslate"><span class="pre">JoinEui</span></code> is a list of pairs of integer values encoding ranges of join EUIs.  Join request frames will be dropped by the Station unless the field <code class="docutils literal notranslate"><span class="pre">JoinEui</span></code> in the message satisfies the condition <em>BegEui&lt;=JoinEui&lt;=EndEui</em> for at least one pair <em>[BegEui,EndEui]</em>.</p>
+<p>The fields <code class="docutils literal notranslate"><span class="pre">nocca</span></code>, <code class="docutils literal notranslate"><span class="pre">nodc</span></code>, and <code class="docutils literal notranslate"><span class="pre">nodwell</span></code> are only available in debug builds of a Station. Their purpose is to disable certain regulatory transmission constraints, namely clear channel assessment, duty-cycle limitations, and dwell-time limitations.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">region</span></code> field specifies the region of the channel plan. It controls certain regulatory behavior such as clear channel assessment, duty-cycle limitations and dwell-time limitations.  Valid names are compatible with the common names noted in the LoRaWAN Regional Parameters specification. In addition, for backward compatibility, the following names are excepted and are mapped to the respective names in braces: EU863(EU868), US902(US915). If this field is omitted then station will operate in an region agnostic mode.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">max_eirp</span></code> field specifies a maxmimum output power. If this field is absent then the region-specific max EIRP value is used. In case of an absent region specifier, it defaults to 14. If <code class="docutils literal notranslate"><span class="pre">max_eirp</span></code> is present, it is only adopted if it lowers the region-specific value.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">hwspec</span></code> field describes the concentrator hardware needed to operate the channel plan delivered in the <code class="docutils literal notranslate"><span class="pre">router_config</span></code> message.  The assigned string must have the following form: <code class="docutils literal notranslate"><span class="pre">sx1301/N</span></code>, where <em>N</em> denotes the number of SX1301 concentrator chips required to operate the channel plan.  The Station will check this requirement against its hardware capabilities.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">freq_range</span></code> field defines the upper- and lower-boundaries of the available spectrum for the region set.  The Station will <strong>NOT</strong> allow downlink transmissions outside of this frequency range.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">DRs</span></code> field defines the available data rates within the channel plan.  It must be an array of 16 entries.  Each entry is an array of three (3) integers encoding the spreading factor (<code class="docutils literal notranslate"><span class="pre">SF</span></code>), the bandwidth (<code class="docutils literal notranslate"><span class="pre">BW</span></code>), as well as a <code class="docutils literal notranslate"><span class="pre">DNONLY</span></code> flag.  <code class="docutils literal notranslate"><span class="pre">SF</span></code> must be in the <em>7-12</em> range for LoRa®, or <em>0</em> for FSK.  <code class="docutils literal notranslate"><span class="pre">BW</span></code> must be one of the following numbers: 125, 250, or 500. <code class="docutils literal notranslate"><span class="pre">BW</span></code> is ignored for FSK.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">DNONLY</span></code> must be <em>1</em> if the data rate is valid for downlink frames only, and <em>0</em> if not.</p>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">sx1301_conf</span></code> field defines how the channel plan maps to the individual SX1301 chips.  Its value is an array of SX1301CONF objects. The number of array elements must be in accordance with the value of the <code class="docutils literal notranslate"><span class="pre">hwspec</span></code> field.</p>
+<p>The layout of a <code class="docutils literal notranslate"><span class="pre">SX1301CONF</span></code> object looks like this:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;radio_0&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">..</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="c1">// same structure as radio_1</span>
+<span class="w">  </span><span class="s2">&quot;radio_1&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">&quot;enable&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">BOOL</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;freq&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="s2">&quot;chan_FSK&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">&quot;enable&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">BOOL</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;radio&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="o">|</span><span class="mf">1</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;if&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="s2">&quot;chan_Lora_std&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">&quot;enable&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">BOOL</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;radio&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="o">|</span><span class="mf">1</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;if&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;bandwidth&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;spread_factor&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="s2">&quot;chan_multiSF_0&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">..</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">// _0 .. _7 all have the same structure</span>
+<span class="w">  </span><span class="p">..</span>
+<span class="w">  </span><span class="s2">&quot;chan_multiSF_7&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">&quot;enable&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">BOOL</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;radio&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="o">|</span><span class="mf">1</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;if&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">bcning</span></code> field is either <code class="docutils literal notranslate"><span class="pre">None</span></code> or a BCNCONF object with the following layout:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;DR&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">  </span><span class="s2">&quot;layout&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">INT</span><span class="p">,</span><span class="nx">INT</span><span class="p">,</span><span class="nx">INT</span><span class="p">]</span>
+<span class="w">  </span><span class="s2">&quot;freqs&quot;</span><span class="o">:</span><span class="w">  </span><span class="p">[</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span><span class="w"> </span><span class="p">..</span><span class="w"> </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Values for these fields can be extracted from the Regional Paramters specification of the LoRaWAN standard.
+The <code class="docutils literal notranslate"><span class="pre">DR</span></code> field defines the data rate to be used for the beacons.
+The <code class="docutils literal notranslate"><span class="pre">layout</span></code> field specifies the octet offsets for insertion of the message fields <code class="docutils literal notranslate"><span class="pre">Time</span></code> and <code class="docutils literal notranslate"><span class="pre">GwSpecific</span></code>, followed by the length of the beacom PDU.
+The <code class="docutils literal notranslate"><span class="pre">freqs</span></code> field defines the frequencies for broadcasting the beacons.
+A typical setting would be {“DR”:3, “layout”:[2,8,17], “freqs”:[869525000] for region EU868.</p>
+</section>
+</section>
+<section id="uplink-messages">
+<h2>Uplink Messages<a class="headerlink" href="#uplink-messages" title="Link to this heading"></a></h2>
+<p>Uplink messages can be grouped into two categories:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Messages that reflect the reception of LoRaWAN radio frames.</p></li>
+<li><p>Management messages that interact with the LoRaWAN network server.</p></li>
+</ol>
+</div></blockquote>
+<p>Both share a common set of fields described in the next section. Subsequent sections describe the individual message types encoding radio and management messages, respectively.</p>
+<section id="radio-metadata">
+<h3>Radio Metadata<a class="headerlink" href="#radio-metadata" title="Link to this heading"></a></h3>
+<p>The following fields are part of all messages that encode LoRaWAN radio frames.  These fields reflect the metadata and timing information accompanying any radio frame:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="p">...</span>
+<span class="w">  </span><span class="s2">&quot;DR&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;Freq&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;upinfo&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">&quot;rctx&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;xtime&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;gpstime&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;rssi&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">FLOAT</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;snr&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">FLOAT</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">DR</span></code> field is the data rate at which the frame was received; possible values are integers in the range of 0 to 15.  The <code class="docutils literal notranslate"><span class="pre">Freq</span></code> field encodes the reception frequency in Hz. The possible values of <code class="docutils literal notranslate"><span class="pre">DR</span></code> and <code class="docutils literal notranslate"><span class="pre">Freq</span></code> depend on the current channel plan.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">upinfo</span></code> object contains some context required by the Station to process a subsequent matching downlink frame.  The fields <code class="docutils literal notranslate"><span class="pre">rctx</span></code> and <code class="docutils literal notranslate"><span class="pre">xtime</span></code> are passed along through the LNS and must be added to matching Class A downlink messages.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">gpstime</span></code> field is the reception timestamp of the frame, expressed in microseconds since the GPS epoch.  If the Station does not have access to a PPS synchronized to GPS time, the value of this field is 0.</p>
+</section>
+<section id="lorawan-join-requests">
+<h3>LoRaWAN Join Requests<a class="headerlink" href="#lorawan-join-requests" title="Link to this heading"></a></h3>
+<p>Join request frames are parsed and the individual parts are sent back in fields as shown below.  Messages of this type also carry fields discussed in <a class="reference internal" href="#radio-metadata">Radio Metadata</a>.</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;jreq&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;MHdr&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">UINT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;JoinEui&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">EUI</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;DevEui&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">EUI</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;DevNonce&quot;</span><span class="o">:</span><span class="w"> </span><span class="nx">UINT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;MIC&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT32</span><span class="p">,</span>
+<span class="w">  </span><span class="p">..</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The field <code class="docutils literal notranslate"><span class="pre">MIC</span></code> is represented as a 32-bit signed integer.</p>
+</div>
+</section>
+<section id="lorawan-data-frames">
+<h3>LoRaWAN Data Frames<a class="headerlink" href="#lorawan-data-frames" title="Link to this heading"></a></h3>
+<p>Data frames are parsed and the individual parts are sent back in fields as shown below.  Messages of this type also carry fields discussed in the Section <a class="reference internal" href="#radio-metadata">Radio Metadata</a>.</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;updf&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;MHdr&quot;</span><span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="nx">UINT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;DevAddr&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="nx">INT32</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;FCtrl&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">UINT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;FCnt&quot;</span><span class="p">,</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">UINT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;FOpts&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;HEX&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;FPort&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="o">-</span><span class="mf">1..255</span><span class="p">),</span>
+<span class="w">  </span><span class="s2">&quot;FRMPayload&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;HEX&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;MIC&quot;</span><span class="w">       </span><span class="o">:</span><span class="w"> </span><span class="nx">INT32</span><span class="p">,</span>
+<span class="w">  </span><span class="p">..</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>If the frame does not contain a port, the value of the field <code class="docutils literal notranslate"><span class="pre">FPort</span></code> is <em>-1</em>.  If the frame does not carry options or data, the value of the fields <code class="docutils literal notranslate"><span class="pre">FOpts</span></code> or <code class="docutils literal notranslate"><span class="pre">FRMPayload</span></code> will be empty strings, respectively.  Otherwise those fields contain strings of hexadecimal characters.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The fields <code class="docutils literal notranslate"><span class="pre">DevAddr</span></code> and <code class="docutils literal notranslate"><span class="pre">MIC</span></code> are represented as 32-bit signed integers.</p>
+</div>
+</section>
+<section id="lorawan-proprietary-frames">
+<h3>LoRaWAN Proprietary Frames<a class="headerlink" href="#lorawan-proprietary-frames" title="Link to this heading"></a></h3>
+<p>Frames marked as proprietary are forwarded in the following form, whereby the entire frame payload is passed along uninterpreted. Messages of this type also carry fields discussed in the <a class="reference internal" href="#radio-metadata">Radio Metadata</a> topic.</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;propdf&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;FRMPayload&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;HEX&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="p">..</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The field <code class="docutils literal notranslate"><span class="pre">FRMPayload</span></code> contains the whole LoRaWAN <code class="docutils literal notranslate"><span class="pre">PHYPayload</span></code> in the case of <code class="docutils literal notranslate"><span class="pre">msgtype:propdf</span></code></p>
+</div>
+</section>
+<section id="transmit-confirmation">
+<h3>Transmit Confirmation<a class="headerlink" href="#transmit-confirmation" title="Link to this heading"></a></h3>
+<p>The Station acknowledges transmit requests from the LNS with a message of type <code class="docutils literal notranslate"><span class="pre">dntxed</span></code>.  This message is only sent when a frame has been put on-air.  There is no feedback to the LNS if a frame could not be sent (e.g., because it was too late, there was a conflict with an ongoing transmission, or the gateway’s duty cycle was exhausted).  These conditions are summarized in health status messages and do not trigger individual responses.</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;dntxed&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;diid&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;DevEui&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;EUI&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;rctx&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;xtime&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;txtime&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="nx">FLOAT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;gpstime&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">diid</span></code> field is a copy of the <code class="docutils literal notranslate"><span class="pre">diid</span></code> field in the <code class="docutils literal notranslate"><span class="pre">dnmsg</span></code> message.  It identifies a particular device interaction and is used by the LNS to reference some internal state.  It is passed along unchanged by the Station.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">rctx</span></code> field specifies the antenna used for transmission, and the <code class="docutils literal notranslate"><span class="pre">xtime</span></code> field is the exact internal time when the frame was put on-air.</p>
+</section>
+</section>
+<section id="downlink-messages">
+<h2>Downlink Messages<a class="headerlink" href="#downlink-messages" title="Link to this heading"></a></h2>
+<p>This section covers all message types used by the LNS to transmit LoRaWAN data frames.</p>
+<p>Single-frame downlinks are either a response to a Class A or Class C uplink frame, or are unsolicited downlink frames for a Class B or Class C interaction. Multiframe downlinks are used to schedule a sequence of multicast frames.</p>
+<section id="single-frame-downlink">
+<h3>Single Frame Downlink<a class="headerlink" href="#single-frame-downlink" title="Link to this heading"></a></h3>
+<p>Stations support downlinks of Class A, B, and C.  For all three classes, the same message type is used, but different fields need to be present.</p>
+<p>A <strong>Class A downlink</strong> frame is a response to a previously-sent uplink.  The layout for Class A requires the following fields:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;dnmsg&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;DevEui&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;EUI&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;dC&quot;</span><span class="w">       </span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w">          </span><span class="c1">// Class A</span>
+<span class="w">  </span><span class="s2">&quot;diid&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;pdu&quot;</span><span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;HEX&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;RxDelay&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..15</span><span class="p">),</span>
+<span class="w">  </span><span class="s2">&quot;RX1DR&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..15</span><span class="p">),</span>
+<span class="w">  </span><span class="s2">&quot;RX1Freq&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;RX2DR&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..15</span><span class="p">),</span>
+<span class="w">  </span><span class="s2">&quot;RX2Freq&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;priority&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..255</span><span class="p">),</span>
+<span class="w">  </span><span class="s2">&quot;xtime&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;rctx&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">diid</span></code> field is a number issued by the LNS to identify a particular device interaction.  Both, <code class="docutils literal notranslate"><span class="pre">diid</span></code> and <code class="docutils literal notranslate"><span class="pre">DevEui</span></code> are passed along by the Station in <code class="docutils literal notranslate"><span class="pre">dntxed</span></code> messages. <code class="docutils literal notranslate"><span class="pre">DevEui</span></code> can be used in cases where the LNS maintains  <code class="docutils literal notranslate"><span class="pre">diid</span></code> as a device-specific identifier. Also, knowing the <code class="docutils literal notranslate"><span class="pre">DevEUI</span></code> to which a particular downlink belongs can be helpful for inspecting gateway logs. The LNS can choose to set <code class="docutils literal notranslate"><span class="pre">DevEUI</span></code> to any non-zero value. The <code class="docutils literal notranslate"><span class="pre">pdu</span></code> field is the radio frame as it will be put on-air.</p>
+<p>The Station will choose either RX1 or RX2 transmission parameters, where RX1 is preferred.  If the frame arrives too late, or the transmission spot is blocked, it will try RX2. To force a decision, the LNS can omit either the RX1 or the RX2 parameters. In any case, <code class="docutils literal notranslate"><span class="pre">RxDelay</span></code> is the delay between end of uplink transmission and start of the RX1 receive window of the device. The exact transmission end time is implicitly encoded in <code class="docutils literal notranslate"><span class="pre">xtime</span></code>. <code class="docutils literal notranslate"><span class="pre">RxDelay</span></code> should have the same value as the <code class="docutils literal notranslate"><span class="pre">RxDelay</span></code> field in the join accept message. Station will automatically infer the RX2 delay by adding one second.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">priority</span></code> field is used when conflicting transmission requests are encountered.  The LNS can give higher priority to frames that carry an acknowledgement or some important MAC commands.  If two frames are in conflict, the one with the higher <code class="docutils literal notranslate"><span class="pre">priority</span></code> value is preferred.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">xtime</span></code> and <code class="docutils literal notranslate"><span class="pre">rctx</span></code> fields contain values that originate from the corresponding uplink message.  Those values must be passed along without being changed by the LNS. They are used by Station to manage proper transmit timing and to handle antenna associations.</p>
+<p>A <strong>Class C downlink</strong> frame that answers an uplink and is aimed at RX1, looks almost identical to Class A <code class="docutils literal notranslate"><span class="pre">dnmsg</span></code> messages.  The only difference is the field <code class="docutils literal notranslate"><span class="pre">dC</span></code>, which declares a Class C interaction.  If the transmission cannot make the RX1 opportunity, the Station will switch over to RX2 parameters and choose a convenient time to send the frame.  There is a maximum time Station will postpone transmission before the frame is dropped. Since RX2 downlink opportunities are arbitrary for class C devices, <code class="docutils literal notranslate"><span class="pre">RxDelay</span></code> is only used to calculate the RX1 opportunity in this case.</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;dnmsg&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;DevEui&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;EUI&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;dC&quot;</span><span class="w">       </span><span class="o">:</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w">         </span><span class="c1">// Class C</span>
+<span class="w">  </span><span class="s2">&quot;diid&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;pdu&quot;</span><span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;HEX&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;RxDelay&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..15</span><span class="p">),</span>
+<span class="w">  </span><span class="s2">&quot;RX1DR&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..15</span><span class="p">),</span>
+<span class="w">  </span><span class="s2">&quot;RX1Freq&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;RX2DR&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..15</span><span class="p">),</span>
+<span class="w">  </span><span class="s2">&quot;RX2Freq&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;priority&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..255</span><span class="p">),</span>
+<span class="w">  </span><span class="s2">&quot;xtime&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;rctx&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>A <strong>Class C downlink</strong> frame not answering an uplink must have the fields indicated in the example below.  The transmission will be delayed until the Station finds a convenient time slot.  If there is no such opportunity, the frame will be dropped after some configurable time; the default is one (1) second.</p>
+<p>Although the <code class="docutils literal notranslate"><span class="pre">rctx</span></code> field is optional, it may be used to select an antenna preference.  The LNS can copy this field from a previous Class A uplink and guide the Station to use the same antenna which received that Class A uplink.</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;dnmsg&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;DevEui&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;EUI&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;dC&quot;</span><span class="w">       </span><span class="o">:</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w">          </span><span class="c1">// Class C</span>
+<span class="w">  </span><span class="s2">&quot;diid&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;pdu&quot;</span><span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;HEX&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;RX2DR&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..15</span><span class="p">),</span>
+<span class="w">  </span><span class="s2">&quot;RX2Freq&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;priority&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..255</span><span class="p">),</span>
+<span class="w">  </span><span class="s2">&quot;rctx&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>A <strong>Class B downlink</strong> frame requires the following fields:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;dnmsg&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;DevEui&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;EUI&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;dC&quot;</span><span class="w">       </span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w">           </span><span class="c1">// Class B</span>
+<span class="w">  </span><span class="s2">&quot;diid&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;pdu&quot;</span><span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;HEX&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;DR&quot;</span><span class="w">       </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..15</span><span class="p">),</span>
+<span class="w">  </span><span class="s2">&quot;Freq&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;priority&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..255</span><span class="p">),</span>
+<span class="w">  </span><span class="s2">&quot;gpstime&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;rctx&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The transmission of a Class B frame requires that the LNS provides a GPS-aligned time.  The value is expressed in microseconds since the GPS epoch.</p>
+<p>The optional <code class="docutils literal notranslate"><span class="pre">rctx</span></code> field may be used to select an antenna preference.  The LNS may copy this field from a previous Class A uplink and guide the Station to use the same antenna which received that Class A uplink.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">DevEui</span></code> field in all <code class="docutils literal notranslate"><span class="pre">dnmsg</span></code> messages must not be zero. Zero is a reserved value.</p>
+</div>
+</section>
+<section id="multicast-schedule">
+<h3>Multicast Schedule<a class="headerlink" href="#multicast-schedule" title="Link to this heading"></a></h3>
+<p>Messages of type <code class="docutils literal notranslate"><span class="pre">dnsched</span></code> can be used to schedule a set of multicast messages.  Each of the message elements needs to specify a GPS time at which it shall be sent.  This type of transmission does not generate <code class="docutils literal notranslate"><span class="pre">dntxed</span></code> responses from the Station.</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;dnsched&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;schedule&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="s2">&quot;pdu&quot;</span><span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;HEX&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;DR&quot;</span><span class="w">       </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..15</span><span class="p">),</span>
+<span class="w">      </span><span class="s2">&quot;Freq&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;priority&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">(</span><span class="mf">0..255</span><span class="p">),</span>
+<span class="w">      </span><span class="s2">&quot;gpstime&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;rctx&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The optional <code class="docutils literal notranslate"><span class="pre">rctx</span></code> field may be used to select an antenna preference.  The LNS may copy this field from a previous Class A uplink and guide the Station to use the same antenna which received that Class A uplink.</p>
+</section>
+</section>
+<section id="monitoring-round-trip-times">
+<h2>Monitoring Round-trip Times<a class="headerlink" href="#monitoring-round-trip-times" title="Link to this heading"></a></h2>
+<p>The message exchange between a Station and the LNS allows for monitoring round-trip times by piggy-backing certain fields onto normal message exchanges.  The LNS may add the <code class="docutils literal notranslate"><span class="pre">MuxTime</span></code> field to every downlink sent to a Station:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;..&quot;</span>
+<span class="w">  </span><span class="s2">&quot;MuxTime&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">FLOAT</span><span class="w">    </span><span class="c1">// downlink</span>
+<span class="w">  </span><span class="p">..</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">MuxTime</span></code> field contains a float value that represents a UTC timestamp, with fractional seconds, and marks the time when the message was sent by the LNS.  The Station will respond by adding the field <code class="docutils literal notranslate"><span class="pre">RefTime</span></code>:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;..&quot;</span>
+<span class="w">  </span><span class="s2">&quot;RefTime&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">FLOAT</span><span class="w">  </span><span class="c1">// uplink</span>
+<span class="w">  </span><span class="p">..</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">RefTime</span></code> field is calculated from the last received <code class="docutils literal notranslate"><span class="pre">MuxTime</span></code>, adjusted by the time interval on the router between the arrival of <code class="docutils literal notranslate"><span class="pre">MuxTime</span></code> and the sending of <code class="docutils literal notranslate"><span class="pre">RefTime</span></code>.  Since downlink traffic is less frequent than uplink messages, it is likely that a <code class="docutils literal notranslate"><span class="pre">MuxTime</span></code> may be reused to construct multiple <code class="docutils literal notranslate"><span class="pre">RefTime</span></code> fields.  This means that round-trip measurements are composed of the latency of the last downlink message and the most recent uplink message.</p>
+</section>
+<section id="time-synchronization">
+<h2>Time Synchronization<a class="headerlink" href="#time-synchronization" title="Link to this heading"></a></h2>
+<p>There are two modes of operation for time synchronization:</p>
+<ol class="arabic simple">
+<li><p>With access to a PPS</p></li>
+<li><p>Independent of a PPS.</p></li>
+</ol>
+<section id="synchronizing-pps-to-gps-time">
+<span id="timesyncproto"></span><h3>Synchronizing PPS to GPS Time<a class="headerlink" href="#synchronizing-pps-to-gps-time" title="Link to this heading"></a></h3>
+<p>If a Station has access to a PPS that is aligned to GPS seconds, it will infer the synchronization to GPS time by running a protocol with the LNS.  To infer the correct GPS time label for a given PPS pulse, the Station will keep sending <code class="docutils literal notranslate"><span class="pre">timesync</span></code> uplink messages to the LNS which should be promptly answered with a downstream <code class="docutils literal notranslate"><span class="pre">timesync</span></code> message.</p>
+<p>Format of an upstream message:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;timesync&quot;</span>
+<span class="w">  </span><span class="s2">&quot;txtime&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The downstream response should be sent by the LNS immediately after it receives the corresponding upstream <code class="docutils literal notranslate"><span class="pre">timesync</span></code>.  The LNS will insert the <code class="docutils literal notranslate"><span class="pre">gpstime</span></code> field and pass through the <code class="docutils literal notranslate"><span class="pre">txtime</span></code> field as received from the Station, where <code class="docutils literal notranslate"><span class="pre">txtime</span></code> is some unspecified time local to the Station.</p>
+<p>The field <code class="docutils literal notranslate"><span class="pre">gpstime</span></code> marks the instant of time when the LNS processes the <code class="docutils literal notranslate"><span class="pre">timesync</span></code> message.  Its value is the time in microseconds since the GPS epoch.</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;timesync&quot;</span>
+<span class="w">  </span><span class="s2">&quot;txtime&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;gpstime&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="transferring-gps-time">
+<h3>Transferring GPS Time<a class="headerlink" href="#transferring-gps-time" title="Link to this heading"></a></h3>
+<p>The LNS shall periodically send the following message to the Station to transfer GPS time.</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;timesync&quot;</span>
+<span class="w">  </span><span class="s2">&quot;xtime&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;gpstime&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">INT64</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The field <code class="docutils literal notranslate"><span class="pre">xtime</span></code> is particular to the Station and the GPS time is inferred from overlapping upstream frames arriving at the LNS.</p>
+</section>
+</section>
+<section id="remote-commands">
+<h2>Remote Commands<a class="headerlink" href="#remote-commands" title="Link to this heading"></a></h2>
+<p>Stations support two mechanisms for running remote commands on the gateway:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;runcmd&quot;</span>
+<span class="w">  </span><span class="s2">&quot;command&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;arguments&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nx">STRING</span><span class="p">,</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">command</span></code> field contains the actual command to execute.  Based on its content, the Station will behave as follows:</p>
+<ul class="simple">
+<li><p>If the executable flag is set, the Station runs the command with the specified set of arguments.</p></li>
+<li><p>If it is a file but not executable, the Station treats it as a file containing a shell script and passes it, together with the arguments, to the system’s local shell for interpretation.</p></li>
+<li><p>If none of the above is true, the Station assumes the <code class="docutils literal notranslate"><span class="pre">command</span></code> value represents shell statements.  It runs the local shell and passes the value as statements together with the arguments for execution.</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">arguments</span></code> field is optional and may be absent or an empty array. If present and not empty, these arguments are passed along with the command.</p>
+</section>
+<section id="remote-shell">
+<h2>Remote Shell<a class="headerlink" href="#remote-shell" title="Link to this heading"></a></h2>
+<p>Stations support a remote shell session tunneling through the WebSocket to the LNS.  The session is initiated by a command as shown below.  After the session is established, the input data to the shell and the output data generated by the shell and its commands are tunneled through the WebSocket as binary records.  A Station can maintain multiple sessions. This being the case, the first byte of the binary record is the session index.  The remaining bytes of a binary record are the input/output data.  The encoding is transparent to the WebSocket transport.</p>
+<p>To query, initiate, or stop a session, the LNS must send the following message:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;rmtsh&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;user&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;term&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;start&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;stop&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>If the fields <code class="docutils literal notranslate"><span class="pre">start</span></code> and <code class="docutils literal notranslate"><span class="pre">stop</span></code> are absent, the current session state is queried.  Otherwise, only one of the two fields shall be present, indicating a session start or stop, respectively.</p>
+<p>The value of the <code class="docutils literal notranslate"><span class="pre">term</span></code> field is the value of the <code class="docutils literal notranslate"><span class="pre">TERM</span></code> environment variable.  It is set before the local shell is started.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">user</span></code> field describes the user who is operating the session.  For the Station this is just informational context data.</p>
+<p>The Station will respond with the following message describing the current state of all sessions:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;msgtype&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;rmtsh&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;rmtsh&quot;</span><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="s2">&quot;user&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;started&quot;</span><span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="nx">BOOL</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;age&quot;</span><span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;pid&quot;</span><span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">..</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">age</span></code> field is the time in seconds since the input/output action on this remote shell session.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">pid</span></code> field is the local process identifier of the started shell.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">started</span></code> field indicates that the shell process is actually running.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, skerlan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,229 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The CUPS Protocol &mdash; basicdocs 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="_static/doctools.js?v=888ff710"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            basicdocs
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">The CUPS Protocol</a><ul>
+<li><a class="reference internal" href="#http-post-request">HTTP POST Request</a></li>
+<li><a class="reference internal" href="#http-post-response">HTTP POST Response</a><ul>
+<li><a class="reference internal" href="#error-conditions">Error Conditions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">basicdocs</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">The CUPS Protocol</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/cups-protocol.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="the-cups-protocol">
+<h1>The CUPS Protocol<a class="headerlink" href="#the-cups-protocol" title="Link to this heading"></a></h1>
+<p>The LoRa Basics™ Station periodically queries the CUPS server for updates.  The protocol is HTTP/REST, using the client/server authentication methods described in <a class="reference internal" href="credentials.html"><span class="doc">Credentials</span></a>.  With each query, the Station provides information about its current state and receives a binary blob containing updates for its LNS and CUPS credentials, along with a generic data segment with arbitrary updates.</p>
+<p>The format of the generic data segment is platform-dependent.  The Station simply executes this file after downloading it.  Usually it is a self-extracting shell script.  However, it may also be a binary executable.</p>
+<a class="reference internal image-reference" href="images/station-cupsproto.svg"><img alt="CUPS Protocol" class="align-center" src="images/station-cupsproto.svg" width="90%" /></a>
+<section id="http-post-request">
+<h2>HTTP POST Request<a class="headerlink" href="#http-post-request" title="Link to this heading"></a></h2>
+<p>The URI of the CUPS update end point is constructed from the contents of the <code class="docutils literal notranslate"><span class="pre">cups.uri</span></code> file (or one of its fallback alternatives as described in <a class="reference internal" href="credentials.html"><span class="doc">Credentials</span></a>).  The path <code class="docutils literal notranslate"><span class="pre">/update-info</span></code> is added and an HTTP POST request is submitted with the body.  The HTTP POST request contains the following JSON object:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;router&quot;</span><span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="nx">ID6</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;cupsUri&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;URI&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;tcUri&quot;</span><span class="w">       </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;URI&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;cupsCredCrc&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;tcCredCrc&quot;</span><span class="w">   </span><span class="o">:</span><span class="w"> </span><span class="nx">INT</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;station&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;model&quot;</span><span class="w">       </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;package&quot;</span><span class="w">     </span><span class="o">:</span><span class="w"> </span><span class="nx">STRING</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;keys&quot;</span><span class="w">        </span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">INT</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">router</span></code> field is the ID6 representation of the gateway’s identity.</p>
+<p>The values of the <code class="docutils literal notranslate"><span class="pre">cupsUri</span></code> and <code class="docutils literal notranslate"><span class="pre">tcUri</span></code> fields are the contents of the credential files <code class="docutils literal notranslate"><span class="pre">cups.uri</span></code> and <code class="docutils literal notranslate"><span class="pre">tc.uri</span></code>, respectively.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">cupsCredCrc</span></code> and <code class="docutils literal notranslate"><span class="pre">tcCredCrc</span></code> fields are CRC32 checksums calculated over the concatenated credentials files <code class="docutils literal notranslate"><span class="pre">cups.{trust,cert,key}</span></code> and <code class="docutils literal notranslate"><span class="pre">tc.{trust,cert,key}</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">station</span></code>, <code class="docutils literal notranslate"><span class="pre">model</span></code>, and <code class="docutils literal notranslate"><span class="pre">package</span></code> fields describe the current version of the Station, the gateway model and the package version.  The package version may contain information about the state of the underlying system and its configuration.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">keys</span></code> field contains an array of CRC32 checksums for each of the signing keys installed on the firmware where the Station is running.  The response from the server will provide a signed update, if available, with a signature matching one of these signing keys.</p>
+</section>
+<section id="http-post-response">
+<h2>HTTP POST Response<a class="headerlink" href="#http-post-response" title="Link to this heading"></a></h2>
+<p>The CUPS server shall respond with HTTP status code 200 and a binary response message. The <code class="docutils literal notranslate"><span class="pre">Content-Type</span></code> header is set to:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Content</span><span class="o">-</span><span class="n">Type</span><span class="p">:</span> <span class="n">application</span><span class="o">/</span><span class="n">octet</span><span class="o">-</span><span class="n">stream</span>
+</pre></div>
+</div>
+<p>The response body shall be in the following binary format:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Bytes</p></th>
+<th class="head"><p>Field</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>cupsUriLen</p></td>
+<td><p>Length of CUPS URI (cun)</p></td>
+</tr>
+<tr class="row-odd"><td><p>cun</p></td>
+<td><p>cupsUri</p></td>
+<td><p>CUPS URI (cups.uri)</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>tcUriLen</p></td>
+<td><p>Length of LNS URI (tun)</p></td>
+</tr>
+<tr class="row-odd"><td><p>tun</p></td>
+<td><p>tcUri</p></td>
+<td><p>LNS URI (tc.uri)</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>cupsCredLen</p></td>
+<td><p>Length of CUPS credentials (ccn)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ccn</p></td>
+<td><p>cupsCred</p></td>
+<td><p>Credentials blob</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>tcCredLen</p></td>
+<td><p>Length of LNS credentials (tcn)</p></td>
+</tr>
+<tr class="row-odd"><td><p>tcn</p></td>
+<td><p>tcCred</p></td>
+<td><p>Credentials blob</p></td>
+</tr>
+<tr class="row-even"><td><p>4</p></td>
+<td><p>sigLen</p></td>
+<td><p>Length of signature for update blob plus size of the keyCRC field (4)</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>keyCRC</p></td>
+<td><p>CRC of the key used for the signature</p></td>
+</tr>
+<tr class="row-even"><td><p>sig</p></td>
+<td><p>sig</p></td>
+<td><p>Signature over the update blob</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>updLen</p></td>
+<td><p>Length of generic update data (udn)</p></td>
+</tr>
+<tr class="row-even"><td><p>udn</p></td>
+<td><p>updData</p></td>
+<td><p>Generic update data blob</p></td>
+</tr>
+</tbody>
+</table>
+<p>The length fields shall be encoded in little endian.  If any of the length fields is zero, there is no update for that particular component.  If CUPS returns a blob where all length fields are zero, there is no update pending.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The CUPS <cite>null</cite> response consists of 14 zero bytes: (HEX) <code class="docutils literal notranslate"><span class="pre">0000000000000000000000000000</span></code>.</p>
+</div>
+<p>The credentials blob is a concatenation of <code class="docutils literal notranslate"><span class="pre">trust/cert/key</span></code>, which is able to encode client authentication using X509 certificates and using tokens.</p>
+<p>For client authentication using X509 certificates, all credentials are encoded in DER format:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">trust</span></code> is the certificate of the trusted certificate authority (CA)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cert</span></code> is the personal certificate for the gateway</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">key</span></code> is the personal private key for the gateway</p></li>
+</ul>
+<p>For token-based authentication, <code class="docutils literal notranslate"><span class="pre">trust</span></code> is the same DER as above; however:</p>
+<ul class="simple">
+<li><p>the private <code class="docutils literal notranslate"><span class="pre">cert</span></code> is not required, and, if absent, the response will contain four “zero” octets for this part</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">key</span></code> is an authorization token that must be added to the subsequent requests to CUPS as part of the headers for the HTTP POST request</p></li>
+</ul>
+<p>The Station unpacks non-empty fields into their respective local credential files.  If generic update data is present and the signature is verified, the update gets saved into a file named <code class="docutils literal notranslate"><span class="pre">update.bin</span></code> and is executed once downloaded successfully.</p>
+<p>This executable/script may replace the Station binary. It may then update the configuration file and the underlying system before restarting the Station process or rebooting the gateway.</p>
+<section id="error-conditions">
+<h3>Error Conditions<a class="headerlink" href="#error-conditions" title="Link to this heading"></a></h3>
+<p>The CUPS server may respond with an error condition. In an error response, the HTTP status code in the response shall not be 200 and the reason text in the status line is rendered in a log message and can be used to give a hint as to hwy the request failed. The message body of a non 200 response is discarded.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, skerlan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

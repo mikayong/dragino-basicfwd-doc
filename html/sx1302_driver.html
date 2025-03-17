@@ -1,0 +1,680 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LoRa concentrator HAL user manual &mdash; basicdocs 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="_static/doctools.js?v=888ff710"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            basicdocs
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">LoRa concentrator HAL user manual</a><ul>
+<li><a class="reference internal" href="#introduction">1. Introduction</a></li>
+<li><a class="reference internal" href="#components-of-the-library">2. Components of the library</a><ul>
+<li><a class="reference internal" href="#loragw-hal">2.1. loragw_hal</a></li>
+<li><a class="reference internal" href="#loragw-reg">2.2. loragw_reg</a></li>
+<li><a class="reference internal" href="#loragw-com">2.3. loragw_com</a></li>
+<li><a class="reference internal" href="#loragw-aux">2.4. loragw_aux</a></li>
+<li><a class="reference internal" href="#loragw-gps">2.5. loragw_gps</a></li>
+<li><a class="reference internal" href="#loragw-sx125x">2.6. loragw_sx125x</a></li>
+<li><a class="reference internal" href="#loragw-sx1250">2.7. loragw_sx1250</a></li>
+<li><a class="reference internal" href="#loragw-sx1302">2.8. loragw_sx1302</a></li>
+<li><a class="reference internal" href="#loragw-sx1302-rx">2.9. loragw_sx1302_rx</a></li>
+<li><a class="reference internal" href="#loragw-sx1302-timestamp">2.10. loragw_sx1302_timestamp</a></li>
+<li><a class="reference internal" href="#loragw-stts751">2.11. loragw_stts751</a></li>
+<li><a class="reference internal" href="#loragw-ad5338r">2.12. loragw_ad5338r</a></li>
+<li><a class="reference internal" href="#loragw-i2c">2.13. loragw_i2c</a></li>
+<li><a class="reference internal" href="#loragw-sx1261">2.14. loragw_sx1261</a></li>
+<li><a class="reference internal" href="#loragw-lbt">2.15. loragw_lbt</a></li>
+<li><a class="reference internal" href="#loragw-mcu">2.16. loragw_mcu</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#software-build-process">3. Software build process</a><ul>
+<li><a class="reference internal" href="#details-of-the-software">3.1. Details of the software</a></li>
+<li><a class="reference internal" href="#building-options">3.2. Building options</a></li>
+<li><a class="reference internal" href="#building-procedures">3.3. Building procedures</a></li>
+<li><a class="reference internal" href="#export">3.4. Export</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#hardware-dependencies">4. Hardware dependencies</a><ul>
+<li><a class="reference internal" href="#hardware-revision">4.1. Hardware revision</a></li>
+<li><a class="reference internal" href="#gps-receiver-or-other-gnss-system">4.2. GPS receiver (or other GNSS system)</a></li>
+<li><a class="reference internal" href="#additionnal-sx1261-radio">4.3. Additionnal SX1261 radio</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#usage">5. Usage</a><ul>
+<li><a class="reference internal" href="#setting-the-software-environment">5.1. Setting the software environment</a></li>
+<li><a class="reference internal" href="#using-the-software-api">5.2. Using the software API</a></li>
+<li><a class="reference internal" href="#debugging-mode">5.3. Debugging mode</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#notes">6. Notes</a><ul>
+<li><a class="reference internal" href="#spreading-factor-sf5-sf6">6.1. Spreading factor SF5 &amp; SF6</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#license">7. License</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">basicdocs</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">LoRa concentrator HAL user manual</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/sx1302_driver.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <blockquote>
+<div><blockquote>
+<div><p>/ _____)             _              | |</p>
+</div></blockquote>
+<dl class="simple">
+<dt>( (____  _____ ____ _| <a href="#id5"><span class="problematic" id="id6">|_ _____  ____|</span></a> <a href="#id1"><span class="problematic" id="id2">|</span></a>__</dt><dd><p>____ | ___ |    (_   _) ___ <a href="#id7"><span class="problematic" id="id8">|/ ___)  _ \
+_____) ) ____|</span></a> | | || <a href="#id9"><span class="problematic" id="id10">|_|</span></a> ____( (___| | | |</p>
+</dd>
+<dt>(______/<a href="#id11"><span class="problematic" id="id12">|_____)_|_|_|</span></a> __)_____)____)_| <a href="#id13"><span class="problematic" id="id14">|_|</span></a></dt><dd><p>(C)2020 Semtech</p>
+</dd>
+</dl>
+</div></blockquote>
+<section id="lora-concentrator-hal-user-manual">
+<h1>LoRa concentrator HAL user manual<a class="headerlink" href="#lora-concentrator-hal-user-manual" title="Link to this heading"></a></h1>
+<section id="introduction">
+<h2>1. Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>The LoRa concentrator Hardware Abstraction Layer is a C library that allow you
+to use a Semtech concentrator chip through a reduced number of high level C
+functions to configure the hardware, send and receive packets.</p>
+<p>The Semtech LoRa concentrator is a digital multi-channel multi-standard packet
+radio used to send and receive packets wirelessly using LoRa or FSK modulations.</p>
+</section>
+<section id="components-of-the-library">
+<h2>2. Components of the library<a class="headerlink" href="#components-of-the-library" title="Link to this heading"></a></h2>
+<p>The library is composed of the following modules:</p>
+<ol class="arabic simple">
+<li><p>abstraction layer</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>loragw_hal</p></li>
+<li><p>loragw_reg</p></li>
+<li><p>loragw_aux</p></li>
+<li><p>loragw_cal</p></li>
+<li><p>loragw_lbt</p></li>
+<li><p>loragw_sx1302</p></li>
+<li><p>loragw_sx1302_rx</p></li>
+<li><p>loragw_sx1302_timestamp</p></li>
+<li><p>loragw_sx125x</p></li>
+<li><p>loragw_sx1250</p></li>
+<li><p>loragw_sx1261</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple">
+<li><p>communication layer for sx1302</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>loragw_com</p></li>
+<li><p>loragw_spi</p></li>
+<li><p>loragw_usb</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple">
+<li><p>communication layer for sx1255/SX1257 radios</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>sx125x_com</p></li>
+<li><p>sx125x_spi</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple">
+<li><p>communication layer for sx1250 radios</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>sx1250_com</p></li>
+<li><p>sx1250_spi</p></li>
+<li><p>sx1250_usb</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple">
+<li><p>communication layer for STM32 MCU (USB)</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>loragw_mcu</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple">
+<li><p>communication layer for sx1261 radio (LBT / Spectral Scan)</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>sx1261_com</p></li>
+<li><p>sx1261_spi</p></li>
+<li><p>sx1261_usb</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple">
+<li><p>peripherals</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>loragw_i2c</p></li>
+<li><p>loragw_gps</p></li>
+<li><p>loragw_stts751</p></li>
+<li><p>loragw_ad5338r</p></li>
+</ul>
+</div></blockquote>
+<p>The library also contains basic test programs to demonstrate code use and check
+functionality.</p>
+<section id="loragw-hal">
+<h3>2.1. loragw_hal<a class="headerlink" href="#loragw-hal" title="Link to this heading"></a></h3>
+<p>This is the main module and contains the high level functions to configure and
+use the LoRa concentrator:</p>
+<ul class="simple">
+<li><p>lgw_board_setconf, to set the configuration of the concentrator</p></li>
+<li><p>lgw_rxrf_setconf, to set the configuration of the radio channels</p></li>
+<li><p>lgw_rxif_setconf, to set the configuration of the IF+modem channels</p></li>
+<li><p>lgw_txgain_setconf, to set the configuration of the concentrator gain table</p></li>
+<li><p>lgw_start, to apply the set configuration to the hardware and start it</p></li>
+<li><p>lgw_stop, to stop the hardware</p></li>
+<li><p>lgw_receive, to fetch packets if any was received</p></li>
+<li><p>lgw_send, to send a single packet (non-blocking, see warning in usage section)</p></li>
+<li><p>lgw_status, to check when a packet has effectively been sent</p></li>
+<li><p>lgw_get_trigcnt, to get the value of the sx1302 internal counter at last PPS</p></li>
+<li><p>lgw_get_instcnt, to get the value of the sx1302 internal counter</p></li>
+<li><p>lgw_get_eui, to get the sx1302 chip EUI</p></li>
+<li><p>lgw_get_temperature, to get the current temperature</p></li>
+<li><p>lgw_time_on_air, to get the Time On Air of a packet</p></li>
+<li><p>lgw_spectral_scan_start, to start scaning a particular channel</p></li>
+<li><p>lgw_spectral_scan_get_status, to get the status of the current scan</p></li>
+<li><p>lgw_spectral_scan_get_results, to get the results of the completed scan</p></li>
+<li><p>lgw_spectral_scan_abort, to abort curretn scan</p></li>
+</ul>
+<p>For an standard application, include only this module.
+The use of this module is detailed on the usage section.</p>
+<p>/!When sending a packet, there is a delay (approx 1.5ms) for the analog
+circuitry to start and be stable. This delay is adjusted by the HAL depending
+on the board version (lgw_i_tx_start_delay_us).</p>
+<p>In ‘timestamp’ mode, this is transparent: the modem is started
+lgw_i_tx_start_delay_us microseconds before the user-set timestamp value is
+reached, the preamble of the packet start right when the internal timestamp
+counter reach target value.</p>
+<p>In ‘immediate’ mode, the packet is emitted as soon as possible: transferring the
+packet (and its parameters) from the host to the concentrator takes some time,
+then there is the lgw_i_tx_start_delay_us, then the packet is emitted.</p>
+<p>In ‘triggered’ mode (aka PPS/GPS mode), the packet, typically a beacon, is
+emitted lgw_i_tx_start_delay_us microsenconds after a rising edge of the
+trigger signal. Because there is no way to anticipate the triggering event and
+start the analog circuitry beforehand, that delay must be taken into account in
+the protocol.</p>
+</section>
+<section id="loragw-reg">
+<h3>2.2. loragw_reg<a class="headerlink" href="#loragw-reg" title="Link to this heading"></a></h3>
+<p>This module is used to access to the LoRa concentrator registers by name instead
+of by address:</p>
+<ul class="simple">
+<li><p>lgw_connect, to initialise and check the connection with the hardware</p></li>
+<li><p>lgw_disconnect, to disconnect the hardware</p></li>
+<li><p>lgw_reg_r, read a named register</p></li>
+<li><p>lgw_reg_w, write a named register</p></li>
+<li><p>lgw_reg_rb, read a name register in burst</p></li>
+<li><p>lgw_reg_wb, write a named register in burst</p></li>
+<li><p>lgw_mem_rb, read from a memory section in burst</p></li>
+<li><p>lgw_mem_wb, write to a memory section in burst</p></li>
+</ul>
+<p>This module handles read-only registers protection, multi-byte registers
+management, signed registers management, read-modify-write routines for
+sub-byte registers and read/write burst fragmentation to respect SPI/USB maximum
+burst length constraints.</p>
+<p>It make the code much easier to read and to debug.
+Moreover, if registers are relocated between different hardware revisions but
+keep the same function, the code written using register names can be reused “as
+is”.</p>
+<p>If you need access to all the registers, include this module in your
+application.</p>
+<p><strong>/!Warning</strong> please be sure to have a good understanding of the LoRa
+concentrator inner working before accessing the internal registers directly.</p>
+</section>
+<section id="loragw-com">
+<h3>2.3. loragw_com<a class="headerlink" href="#loragw-com" title="Link to this heading"></a></h3>
+<p>This module contains the functions to access the LoRa concentrator register
+array through the SPI or USB interfaces:</p>
+<ul class="simple">
+<li><p>lgw_com_r to read one byte</p></li>
+<li><p>lgw_com_w to write one byte</p></li>
+<li><p>lgw_com_rb to read two bytes or more</p></li>
+<li><p>lgw_com_wb to write two bytes or more</p></li>
+</ul>
+<p>This modules is an abstract interface, it then relies on the following modules
+to actually perform the interfacing:</p>
+<ul class="simple">
+<li><p>loragw_spi : for SPI interface</p></li>
+<li><p>loragw_usb : for USB interface</p></li>
+</ul>
+<p>Please <em>do not</em> include that module directly into your application.</p>
+<p><strong>/!Warning</strong> Accessing the LoRa concentrator register array without the
+checks and safety provided by the functions in loragw_reg is not recommended.</p>
+</section>
+<section id="loragw-aux">
+<h3>2.4. loragw_aux<a class="headerlink" href="#loragw-aux" title="Link to this heading"></a></h3>
+<p>This module contains a single host-dependant function wait_ms to pause for a
+defined amount of milliseconds.</p>
+<p>The procedure to start and configure the LoRa concentrator hardware contained in
+the loragw_hal module requires to wait for several milliseconds at certain
+steps, typically to allow for supply voltages or clocks to stabilize after been
+switched on.</p>
+<p>An accuracy of 1 ms or less is ideal.
+If your system does not allow that level of accuracy, make sure that the actual
+delay is <em>longer</em> that the time specified when the function is called (ie.
+wait_ms(X) <strong>MUST NOT</strong> before X milliseconds under any circumstance).</p>
+<p>If the minimum delays are not guaranteed during the configuration and start
+procedure, the hardware might not work at nominal performance.
+Most likely, it will not work at all.</p>
+</section>
+<section id="loragw-gps">
+<h3>2.5. loragw_gps<a class="headerlink" href="#loragw-gps" title="Link to this heading"></a></h3>
+<p>This module contains functions to synchronize the concentrator internal
+counter with an absolute time reference, in our case a GPS satellite receiver.</p>
+<p>The internal concentrator counter is used to timestamp incoming packets and to
+triggers outgoing packets with a microsecond accuracy.
+In some cases, it might be useful to be able to transform that internal
+timestamp (that is independent for each concentrator running in a typical
+networked system) into an absolute GPS time.</p>
+<p>In a typical implementation a GPS specific thread will be called, doing the
+following things after opening the serial port:</p>
+<ul class="simple">
+<li><p>blocking reads on the serial port (using system read() function)</p></li>
+<li><p>parse UBX messages (using lgw_parse_ubx) to get actual native GPS time</p></li>
+<li><p>parse NMEA sentences (using lgw_parse_nmea) to get location and UTC time</p></li>
+</ul>
+<p>Note: the RMC sentence gives UTC time, not native GPS time.</p>
+<p>And each time an NAV-TIMEGPS UBX message has been received:</p>
+<ul class="simple">
+<li><p>get the concentrator timestamp (using lgw_get_trigcnt, mutex needed to
+protect access to the concentrator)</p></li>
+<li><p>get the GPS time contained in the UBX message (using lgw_gps_get)</p></li>
+<li><p>call the lgw_gps_sync function (use mutex to protect the time reference that
+should be a global shared variable).</p></li>
+</ul>
+<p>Then, in other threads, you can simply used that continuously adjusted time
+reference to convert internal timestamps to GPS time (using lgw_cnt2gps) or
+the other way around (using lgw_gps2cnt). Inernal concentrator timestamp can
+also be converted to/from UTC time using lgw_cnt2utc/lgw_utc2cnt functions.</p>
+</section>
+<section id="loragw-sx125x">
+<h3>2.6. loragw_sx125x<a class="headerlink" href="#loragw-sx125x" title="Link to this heading"></a></h3>
+<p>This module contains functions to handle the configuration of SX1255 and
+SX1257 radios. In order to communicate with the radio, it relies on the
+following modules:</p>
+<ul class="simple">
+<li><p>sx125x_com : abstract interfacing to select USB or SPI interface</p></li>
+<li><p>sx125x_spi : implementation of the SPI interface</p></li>
+</ul>
+</section>
+<section id="loragw-sx1250">
+<h3>2.7. loragw_sx1250<a class="headerlink" href="#loragw-sx1250" title="Link to this heading"></a></h3>
+<p>This module contains functions to handle the configuration of SX1250 radios. In
+order to communicate with the radio, it relies on the following modules:</p>
+<ul class="simple">
+<li><p>sx1250_com : abstract interfacing to select USB or SPI interface</p></li>
+<li><p>sx1250_spi : implementation of the SPI interface</p></li>
+<li><p>sx1250_usb : implementation of the USB interface</p></li>
+</ul>
+</section>
+<section id="loragw-sx1302">
+<h3>2.8. loragw_sx1302<a class="headerlink" href="#loragw-sx1302" title="Link to this heading"></a></h3>
+<p>This module contains functions to abstract SX1302 concentrator capabilities.</p>
+</section>
+<section id="loragw-sx1302-rx">
+<h3>2.9. loragw_sx1302_rx<a class="headerlink" href="#loragw-sx1302-rx" title="Link to this heading"></a></h3>
+<p>This module is a sub-module of the loragw_sx1302 module focusing on abstracting
+the RX buffer of the SX1302.</p>
+</section>
+<section id="loragw-sx1302-timestamp">
+<h3>2.10. loragw_sx1302_timestamp<a class="headerlink" href="#loragw-sx1302-timestamp" title="Link to this heading"></a></h3>
+<p>This module is a sub-module of the loragw_sx1302 module focusing on abstracting
+the timestamp counter of the SX1302.
+It converts the 32-bits 32MHz internal counter of the SX1302 to a 32-bits 1MHz
+counter.
+This module needs to be called regularly by upper layers to maintain counter
+wrapping when converting from 32MHz to 1MHz.
+It also provides function to add correction to the timestamp counter to take
+into account the LoRa demodulation processing time.</p>
+</section>
+<section id="loragw-stts751">
+<h3>2.11. loragw_stts751<a class="headerlink" href="#loragw-stts751" title="Link to this heading"></a></h3>
+<p>This module contains a very basic driver for the STmicroelectronics ST751
+temperature sensor which is on the CoreCell reference design.</p>
+</section>
+<section id="loragw-ad5338r">
+<h3>2.12. loragw_ad5338r<a class="headerlink" href="#loragw-ad5338r" title="Link to this heading"></a></h3>
+<p>This module contains a very basic driver for the Analog Devices AD5338R DAC used
+on the Semtech CN490 Full Duplex reference design to set the PA fixed gain.</p>
+</section>
+<section id="loragw-i2c">
+<h3>2.13. loragw_i2c<a class="headerlink" href="#loragw-i2c" title="Link to this heading"></a></h3>
+<p>This module provides basic function to communicate with I2C devices on the board.
+It is used in this project for accessing the temperature sensor, the AD5338R DAC…</p>
+</section>
+<section id="loragw-sx1261">
+<h3>2.14. loragw_sx1261<a class="headerlink" href="#loragw-sx1261" title="Link to this heading"></a></h3>
+<p>This module contains functions to handle the configuration of SX1261 radio for
+Listen-Before-Talk or Spectral Scan functionnalities. In order to communicate
+with the radio, it relies on the following modules:</p>
+<ul class="simple">
+<li><p>sx1261_com : abstract interfacing to select USB or SPI interface</p></li>
+<li><p>sx1261_spi : implementation of the SPI interface</p></li>
+<li><p>sx1261_usb : implementation of the USB interface</p></li>
+</ul>
+<p>This module will also load the sx1261 firmware patch RAM, necessary to support
+Listen-Before-Talk and spectral scan features, from the sx1261_pram.var file.</p>
+</section>
+<section id="loragw-lbt">
+<h3>2.15. loragw_lbt<a class="headerlink" href="#loragw-lbt" title="Link to this heading"></a></h3>
+<p>This module contains functions to start and stop the Listen-Before-Talk feature
+when it is enabled. Those functions are called by the lgw_send() function to
+ensure that the concentrator is allowed to transmit.</p>
+<p>Listen-Before-Talk (LBT) and Spectral Scan features need an additional sx1261
+radio to be configured.</p>
+<p>The Listen-Before-Talk feature works as follows:</p>
+<ul class="simple">
+<li><p>the HAL configures the sx1261 for scanning the channel on which it needs to</p></li>
+</ul>
+<p>transmit.
+* the SX1261 will scan the channel and set a GPIO to high or low depending if
+the channel is busy or not (according to scanning parameters)
+* the sx1302 AGC firmware will check the status of this GPIO before actually
+starting the transmit, to ensure it is allowed. The AGC fw sets its status
+register to inform if the transmit could be done or not.
+* the HAL waits for the transmit to be initiated and checks if it was allowed or
+not.
+* the HAL stops the scanning, and return the tramsit status to the caller.</p>
+</section>
+<section id="loragw-mcu">
+<h3>2.16. loragw_mcu<a class="headerlink" href="#loragw-mcu" title="Link to this heading"></a></h3>
+<p>This module contains the functions to setup the communication interface with the
+STM32 MCU, and to communicate with the sx1302 and the radios when the host and
+the concentrator are connected through USB llink.</p>
+<p>The MCU acts as a simple USB &lt;-&gt; SPI bridge. This means that the HAL running on
+the host is the same, for both SPI or USB gateways.</p>
+<p>But, as the USB communication link brings a 1ms latency for each transfer, the
+MCU provides a mean to group register write requests in one single USB transfer.
+It is necessary when a particular configuration has to be done in a time
+critical task.</p>
+<p>For this, 2 new functions has been added:
+* lgw_com_set_write_mode, to indicate if the following calls to lgw_com_w(b)
+need to be grouped on a single USB transfer (BULK mode) or not (SINGLE mode).
+* lgw_com_flush, to actually perform the USB transfer of all grouped commands
+if BULK mode was selected.</p>
+<p>Both functions will do nothing in case of SPI.</p>
+<p>The same mechanism can be used to configure the sx1261 radio.</p>
+</section>
+</section>
+<section id="software-build-process">
+<h2>3. Software build process<a class="headerlink" href="#software-build-process" title="Link to this heading"></a></h2>
+<section id="details-of-the-software">
+<h3>3.1. Details of the software<a class="headerlink" href="#details-of-the-software" title="Link to this heading"></a></h3>
+<p>The library is written following ANSI C conventions but using C99 explicit
+length data type for all data exchanges with hardware and for parameters.</p>
+<p>The loragw_aux module contains POSIX dependant functions for millisecond
+accuracy pause.
+For embedded platforms, the function could be rewritten using hardware timers.</p>
+</section>
+<section id="building-options">
+<h3>3.2. Building options<a class="headerlink" href="#building-options" title="Link to this heading"></a></h3>
+<p>All modules use a fprintf(stderr,…) function to display debug diagnostic
+messages if the DEBUG_xxx is set to 1 in library.cfg</p>
+</section>
+<section id="building-procedures">
+<h3>3.3. Building procedures<a class="headerlink" href="#building-procedures" title="Link to this heading"></a></h3>
+<p>For cross-compilation set the ARCH and CROSS_COMPILE variables in the Makefile,
+or in your shell environment, with the correct toolchain name and path.
+ex:
+export PATH=/home/foo/rpi-toolchain/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
+export ARCH=arm
+export CROSS_COMPILE=arm-linux-gnueabihf-</p>
+<p>The Makefile in the libloragw directory will parse the library.cfg file and
+generate a config.h C header file containing #define options.
+Those options enables and disables sections of code in the loragw_xxx.h files
+and the <a href="#id3"><span class="problematic" id="id4">*</span></a>.c source files.</p>
+<p>The library.cfg is also used directly to select the proper set of dynamic
+libraries to be linked with.</p>
+</section>
+<section id="export">
+<h3>3.4. Export<a class="headerlink" href="#export" title="Link to this heading"></a></h3>
+<p>Once build, to use that library on another system, you need to export the
+following files :</p>
+<ul class="simple">
+<li><p>libloragw/library.cfg  -&gt; root configuration file</p></li>
+<li><p>libloragw/libloragw.a  -&gt; static library, to be linked with a program</p></li>
+<li><p>libloragw/readme.md  -&gt; required for license compliance</p></li>
+<li><p>libloragw/inc/config.h  -&gt; C configuration flags, derived from library.cfg</p></li>
+<li><p>libloragw/inc/loragw_*.h  -&gt; take only the ones you need (eg. _hal and _gps)</p></li>
+</ul>
+<p>After statically linking the library to your application, only the license
+is required to be kept or copied inside your program documentation.</p>
+</section>
+</section>
+<section id="hardware-dependencies">
+<h2>4. Hardware dependencies<a class="headerlink" href="#hardware-dependencies" title="Link to this heading"></a></h2>
+<section id="hardware-revision">
+<h3>4.1. Hardware revision<a class="headerlink" href="#hardware-revision" title="Link to this heading"></a></h3>
+<p>The loragw_reg and loragw_hal are written for a specific version on the Semtech
+hardware (IP and/or silicon revision).</p>
+<p>This code has been written for:</p>
+<ul class="simple">
+<li><p>Semtech SX1302 chip</p></li>
+<li><p>Semtech SX1250, SX1257 or SX1255 I/Q transceivers</p></li>
+</ul>
+<p>The library will not work if there is a mismatch between the hardware version
+and the library version. You can use the test program test_loragw_reg to check
+if the hardware registers match their software declaration.</p>
+</section>
+<section id="gps-receiver-or-other-gnss-system">
+<h3>4.2. GPS receiver (or other GNSS system)<a class="headerlink" href="#gps-receiver-or-other-gnss-system" title="Link to this heading"></a></h3>
+<p>To use the GPS module of the library, the host must be connected to a GPS
+receiver via a serial link (or an equivalent receiver using a different
+satellite constellation).
+The serial link must appear as a “tty” device in the /dev/ directory, and the
+user launching the program must have the proper system rights to read and
+write on that device.
+Use <cite>chmod a+rw</cite> to allow all users to access that specific tty device, or use
+sudo to run all your programs (eg. <cite>sudo ./test_loragw_gps</cite>).</p>
+<p>In the current revision, the library only reads data from the serial port,
+expecting to receive NMEA frames that are generally sent by GPS receivers as
+soon as they are powered up, and UBX messages which are proprietary to u-blox
+modules.</p>
+<p>The GPS receiver <strong>MUST</strong> send UBX messages shortly after sending a PPS pulse
+on to allow internal concentrator timestamps to be converted to absolute GPS time.
+If the GPS receiver sends a GGA NMEA sentence, the gateway 3D position will
+also be available.</p>
+</section>
+<section id="additionnal-sx1261-radio">
+<h3>4.3. Additionnal SX1261 radio<a class="headerlink" href="#additionnal-sx1261-radio" title="Link to this heading"></a></h3>
+<p>In order to perform Listen-Before-Talk and/or Spectral Scan, an additional SX1261
+radio is required. Its internal firmware also needs to be patched (patch RAM) to
+support those particular features.</p>
+</section>
+</section>
+<section id="usage">
+<h2>5. Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="setting-the-software-environment">
+<h3>5.1. Setting the software environment<a class="headerlink" href="#setting-the-software-environment" title="Link to this heading"></a></h3>
+<p>For a typical application you need to:</p>
+<ul class="simple">
+<li><p>include loragw_hal.h in your program source</p></li>
+<li><p>link to the libloragw.a static library during compilation</p></li>
+<li><p>link to the librt library due to loragw_aux dependencies (timing functions)</p></li>
+</ul>
+<p>For an application that will also access the concentrator configuration
+registers directly (eg. for advanced configuration) you also need to:</p>
+<ul class="simple">
+<li><p>include loragw_reg.h in your program source</p></li>
+</ul>
+</section>
+<section id="using-the-software-api">
+<h3>5.2. Using the software API<a class="headerlink" href="#using-the-software-api" title="Link to this heading"></a></h3>
+<p>To use the HAL in your application, you must follow some basic rules:</p>
+<ul class="simple">
+<li><p>configure the radios path and IF+modem path before starting the radio</p></li>
+<li><p>the configuration is only transferred to hardware when you call the <em>start</em>
+function</p></li>
+<li><p>you cannot receive packets until one (or +) radio is enabled AND one (or +)
+IF+modem part is enabled AND the concentrator is started</p></li>
+<li><p>you cannot send packets until one (or +) radio is enabled AND the concentrator
+is started</p></li>
+<li><p>you must stop the concentrator before changing the configuration</p></li>
+</ul>
+<p>A typical application flow for using the HAL is the following:</p>
+<blockquote>
+<div><p>&lt;configure the radios and IF+modems&gt;
+&lt;start the LoRa concentrator&gt;
+loop {</p>
+<blockquote>
+<div><p>&lt;fetch packets that were received by the concentrator&gt;
+&lt;process, store and/or forward received packets&gt;
+&lt;send packets through the concentrator&gt;</p>
+</div></blockquote>
+<p>}
+&lt;stop the concentrator&gt;</p>
+</div></blockquote>
+<p><strong>/!Warning</strong> The lgw_send function is non-blocking and returns while the
+LoRa concentrator is still sending the packet, or even before the packet has
+started to be transmitted if the packet is triggered on a future event.
+While a packet is emitted, no packet can be received (limitation intrinsic to
+most radio frequency systems).</p>
+<p>Your application <em>must</em> take into account the time it takes to send a packet or
+check the status (using lgw_status) before attempting to send another packet.</p>
+<p>Trying to send a packet while the previous packet has not finished being send
+will result in the previous packet not being sent or being sent only partially
+(resulting in a CRC error in the receiver).</p>
+</section>
+<section id="debugging-mode">
+<h3>5.3. Debugging mode<a class="headerlink" href="#debugging-mode" title="Link to this heading"></a></h3>
+<p>To debug your application, it might help to compile the loragw_hal function
+with the debug messages activated (set DEBUG_HAL=1 in library.cfg).
+It then send a lot of details, including detailed error messages to <em>stderr</em>.</p>
+</section>
+</section>
+<section id="notes">
+<h2>6. Notes<a class="headerlink" href="#notes" title="Link to this heading"></a></h2>
+<section id="spreading-factor-sf5-sf6">
+<h3>6.1. Spreading factor SF5 &amp; SF6<a class="headerlink" href="#spreading-factor-sf5-sf6" title="Link to this heading"></a></h3>
+<p>The sx1302 supports SF5 and SF6 spreading factors, and the HAL also. But it is
+important to note that the only syncword supported for SF5 and SF6 is 0x12
+(also known as “private”).</p>
+<p>This is true whatever how of the “lorawan_public” field of lgw_conf_board_s is
+set.</p>
+</section>
+</section>
+<section id="license">
+<h2>7. License<a class="headerlink" href="#license" title="Link to this heading"></a></h2>
+<p>Copyright (c) 2019, SEMTECH S.A.
+All rights reserved.</p>
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:</p>
+<ul class="simple">
+<li><p>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.</p></li>
+<li><p>Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.</p></li>
+<li><p>Neither the name of the Semtech corporation nor the
+names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written permission.</p></li>
+</ul>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL SEMTECH S.A. BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+<p><em>EOF</em></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, skerlan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

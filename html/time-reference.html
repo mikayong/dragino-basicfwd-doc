@@ -1,0 +1,303 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clock Synchronization and Time References &mdash; basicdocs 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="_static/doctools.js?v=888ff710"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            basicdocs
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Clock Synchronization and Time References</a><ul>
+<li><a class="reference internal" href="#clocks-and-their-purposes">Clocks and Their Purposes</a></li>
+<li><a class="reference internal" href="#clock-synchronization">Clock Synchronization</a><ul>
+<li><a class="reference internal" href="#pps-sx1301-if-pps-enabled">PPS &lt;-&gt; SX1301 (if PPS enabled)</a></li>
+<li><a class="reference internal" href="#mcu-sx1301">MCU &lt;-&gt; SX1301</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#time-domains-and-conversions">Time Domains and Conversions</a><ul>
+<li><a class="reference internal" href="#system-time">System Time</a></li>
+<li><a class="reference internal" href="#utc">UTC</a></li>
+<li><a class="reference internal" href="#gps-if-pps-enabled">GPS (if PPS enabled)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#time-conversion-apis">Time Conversion APIs</a></li>
+<li><a class="reference internal" href="#time-transfer">Time Transfer</a></li>
+<li><a class="reference internal" href="#faq">FAQ</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">basicdocs</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Clock Synchronization and Time References</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/time-reference.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="clock-synchronization-and-time-references">
+<h1>Clock Synchronization and Time References<a class="headerlink" href="#clock-synchronization-and-time-references" title="Link to this heading"></a></h1>
+<p>Timing and synchronization requirements in LoRaWAN gateways depend on their mode of operation: Indoor gateways which operate purely on LoRaWAN Class A traffic do not require any synchronization mechanism because the only relevant time domain is given by the concentrator’s clock. Nevertheless, LoRa Basics™ Station tracks relative clock drifts and a UTC time reference for convenience, even under this scenario. For outdoor gateways which are equipped with GPS receivers, Station additionally tracks high-precision clock drifts and a time reference to the global GPS time.</p>
+<p>The following sections, we look at the synchronization and time reference tracking requirements for each of the clocks involved in a LoRaWAN gateway as well as the time-related strategies implemented in LoRa Basics™ Station.</p>
+<section id="clocks-and-their-purposes">
+<h2>Clocks and Their Purposes<a class="headerlink" href="#clocks-and-their-purposes" title="Link to this heading"></a></h2>
+<p>The gateway operates on various clocks with different purposes:</p>
+<p><strong>PPS (pulse per second)</strong>: The PPS is a 1Hz clock synchronized to global GPS time with a precision in the order of nanoseconds. The main purpose of the PPS in LoRaWAN gateways is to provide a global time reference which allows time-synchronous packet emission of gateways with an accuracy of up to 1 microsecond. This is required for LoRaWAN Class B beacons. The PPS can also be used to calculate the various clock drifts with respect to the global time reference.</p>
+<p><strong>SX1301 (xticks)</strong>: The sx1301 maintains a 32-bit microsecond counter - the <code class="docutils literal notranslate"><span class="pre">xticks</span></code> counter, which is driven by a 32 MHz temperature-compensated crystal oscillator (TCXO). Receiving packets get timestamped with, and packet transmission times are expressed by, the <code class="docutils literal notranslate"><span class="pre">xticks</span></code>. If the gateway design allows for access to a PPS, the <cite>xticks</cite> can be latched to the PPS rising edge. Station abstracts the sx1301’s hardware <cite>xticks</cite> counter as a monotonic 64-bit microsecond counter: the <code class="docutils literal notranslate"><span class="pre">xtime</span></code>. All actions-related packet routing (like the allocation of a packet into the TX queue) are expressed in the <code class="docutils literal notranslate"><span class="pre">xtime</span></code> time domain. LoRaWAN Class B requires a conversion between GPS time and <code class="docutils literal notranslate"><span class="pre">xtime</span></code>.</p>
+<p><strong>Host MCU</strong>: Station uses the host MCU’s clock_monotonic to schedule jobs. The most time-critical job is the TX job, which puts a packet into the sx1301’s TX buffer just before the transmission is due. This can be done with an accuracy of a few milliseconds with respect to the sx1301 clock.</p>
+</section>
+<section id="clock-synchronization">
+<h2>Clock Synchronization<a class="headerlink" href="#clock-synchronization" title="Link to this heading"></a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The width of pulses generated by crystal oscillators is impacted by various physical conditions, such as ambient temperature, and is subject to product variation. Consequently, any two oscillators will generate pulses of slightly different widths and counters counting those pulses will increment with different speeds. The effect of this could be, for example, that in a given second a hypothetical <code class="docutils literal notranslate"><span class="pre">counter</span> <span class="pre">A</span></code> counted 1000000 (1e6) pulses while hypothetical <code class="docutils literal notranslate"><span class="pre">counter</span> <span class="pre">B</span></code>, driven by a different oscillator, counted 999998 pulses. In this particular example, within one second <code class="docutils literal notranslate"><span class="pre">counter</span> <span class="pre">B</span></code> drifted two microseconds with respect to <code class="docutils literal notranslate"><span class="pre">counter</span> <span class="pre">A</span></code>, which corresponds to 0.0002%, i.e. 2ppm.</p>
+</div>
+<p>Synchronizing a pair of clocks in this context means tracking their relative drift. This allows us to express a given time interval in terms of both clocks. The synchronization precision is a measure of the error we make during conversion of a fixed-time interval between the clocks.</p>
+<p>In regular intervals Station executes the <code class="docutils literal notranslate"><span class="pre">ral_getTimesync</span></code> function, which collects the following <cite>timesync measurements</cite> based on the RAL implementation:</p>
+<dl class="c type">
+<dt class="sig sig-object c" id="c.timesync_t">
+<span class="k"><span class="pre">type</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">timesync_t</span></span></span><a class="headerlink" href="#c.timesync_t" title="Link to this definition"></a><br /></dt>
+<dd><dl class="c member">
+<dt class="sig sig-object c" id="c.timesync_t.pps_xtime">
+<span class="n"><span class="pre">sL_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">pps_xtime</span></span></span><a class="headerlink" href="#c.timesync_t.pps_xtime" title="Link to this definition"></a><br /></dt>
+<dd><p>Last latched sx1301 <cite>xticks</cite> counter value, accounted for rollovers. 0 if PPS disabled.</p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.timesync_t.xtime">
+<span class="n"><span class="pre">sL_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">xtime</span></span></span><a class="headerlink" href="#c.timesync_t.xtime" title="Link to this definition"></a><br /></dt>
+<dd><p>Instantaneous sx1301 <code class="docutils literal notranslate"><span class="pre">xticks</span></code> counter value, accounted for rollovers.</p>
+</dd></dl>
+
+<dl class="c member">
+<dt class="sig sig-object c" id="c.timesync_t.ustime">
+<span class="n"><span class="pre">ustime_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ustime</span></span></span><a class="headerlink" href="#c.timesync_t.ustime" title="Link to this definition"></a><br /></dt>
+<dd><p>MCU system time (clock_monotonic) in microseconds at the moment at which the <code class="docutils literal notranslate"><span class="pre">xticks</span></code> counter was read (the expected error is in the order of a few milliseconds).</p>
+</dd></dl>
+
+</dd></dl>
+
+<p>Each measurement round is assigned a <cite>timesync quality</cite> value which is defined by the time in microseconds it took to fetch the instantaneous <code class="docutils literal notranslate"><span class="pre">xticks</span></code> counter value. Station keeps statistics on the timesync quality and discards measurements whose quality is considered an outlier. Timesync quality outliers can occur if the Station process is preempted during the SPI transaction where the <code class="docutils literal notranslate"><span class="pre">xticks</span></code> counter is fetched. This could impact the MCU/SX1301 drift estimation and is therefore discarded.</p>
+<p>Based on the timesync measurements the following clock drift statistics are tracked:</p>
+<section id="pps-sx1301-if-pps-enabled">
+<h3>PPS &lt;-&gt; SX1301 (if PPS enabled)<a class="headerlink" href="#pps-sx1301-if-pps-enabled" title="Link to this heading"></a></h3>
+<p>The PPS/SX1301 drift characterizes the drift of the SX1301 clock with respect to the global time reference. Compensating for this drift is necessary whenever packets whose transmission time is expressed in GPS time need to be emitted with microsecond-accuracy, i.e. Class B beacons.</p>
+<p>This is an example of PPS/SX1301 drift statistics printed into the log:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">SYN</span><span class="p">:</span><span class="n">INFO</span><span class="p">]</span> <span class="n">PPS</span><span class="o">/</span><span class="n">SX1301</span> <span class="n">drift</span> <span class="n">stats</span><span class="p">:</span> <span class="nb">min</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.3</span><span class="n">ppm</span>  <span class="n">q50</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.5</span><span class="n">ppm</span>  <span class="n">q80</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.5</span><span class="n">ppm</span>  <span class="nb">max</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.7</span><span class="n">ppm</span> <span class="o">-</span> <span class="n">threshold</span> <span class="n">q80</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.5</span><span class="n">ppm</span>
+</pre></div>
+</div>
+</section>
+<section id="mcu-sx1301">
+<h3>MCU &lt;-&gt; SX1301<a class="headerlink" href="#mcu-sx1301" title="Link to this heading"></a></h3>
+<p>Station tracks the MCU/SX1301 drift under the assumption that the SX1301 clock is more accurate (i.e. more aligned with the global reference time) than the MCU clock. This is needed to correct time intervals which are expressed in system time for the MCU clock drift. An example where the MCU clock drift correct comes into play is the <code class="docutils literal notranslate"><span class="pre">RefTime</span></code> field in the <code class="docutils literal notranslate"><span class="pre">updf</span></code> message which is used by the server to track the IP link latency between the server and the gateway. For downlink packet scheduling, the MCU drift is irrelevant because the scheduling is done purely in the SX1301 clock time domain. Internal job scheduling related to packet transmission does not require MCU drift compensation either. This is because the errors incurred to job scheduling time intervals due to MCU clock drift are in the order of microseconds which is insignificant.</p>
+<p>This is an example of MCU/SX1301 drift statistics printed into the log:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">SYN</span><span class="p">:</span><span class="n">INFO</span><span class="p">]</span> <span class="n">MCU</span><span class="o">/</span><span class="n">SX1301</span> <span class="n">drift</span> <span class="n">stats</span><span class="p">:</span> <span class="nb">min</span><span class="p">:</span> <span class="o">+</span><span class="mf">1.1</span><span class="n">ppm</span>  <span class="n">q50</span><span class="p">:</span> <span class="o">+</span><span class="mf">1.6</span><span class="n">ppm</span>  <span class="n">q80</span><span class="p">:</span> <span class="o">+</span><span class="mf">1.8</span><span class="n">ppm</span>  <span class="nb">max</span><span class="p">:</span> <span class="o">+</span><span class="mf">2.8</span><span class="n">ppm</span> <span class="o">-</span> <span class="n">threshold</span> <span class="n">q90</span><span class="p">:</span> <span class="o">+</span><span class="mf">2.1</span><span class="n">ppm</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="time-domains-and-conversions">
+<h2>Time Domains and Conversions<a class="headerlink" href="#time-domains-and-conversions" title="Link to this heading"></a></h2>
+<p>References between time domains are tracked as relative offsets between their epochs. In particular, Station keeps track of the UTC time reference with respect to the MCU clock and (if PPS is present) the GPS time reference with respect to the sx1301 clock.</p>
+<section id="system-time">
+<h3>System Time<a class="headerlink" href="#system-time" title="Link to this heading"></a></h3>
+<p>The system time is the free-running, monotonically-increasing, 64-bit microsecond counter driven by the MCU clock.</p>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.rt_getTime">
+<span class="n"><span class="pre">ustime_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rt_getTime</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.rt_getTime" title="Link to this definition"></a><br /></dt>
+<dd><p>Runtime function to retrieve current system time. Maps to a platform-specific <code class="docutils literal notranslate"><span class="pre">sL_t</span> <span class="pre">sys_time()</span></code> function. On Linux, this calls <code class="docutils literal notranslate"><span class="pre">clock_gettime(CLOCK_MONOTONIC,</span> <span class="pre">&amp;t)</span></code>.</p>
+</dd></dl>
+
+</section>
+<section id="utc">
+<h3>UTC<a class="headerlink" href="#utc" title="Link to this heading"></a></h3>
+<p>Every message from the server down to the gateway can contain the <code class="docutils literal notranslate"><span class="pre">MuxTime</span></code> field with the UTC timestamp at the moment the message was sent. Therefore, for every server message Station receives, there is an opportunity to adjust the offset between the system time and UTC if the MCU drift is significant. Under this scheme, the Station’s UTC time reference is impacted by various latencies incurred in the message exchange, out of which the network latency is the most severe. This can be tolerated because the UTC time reference is of purely informative value. It is used for timestamping log messages and providing a rough arrival time estimate of uplink packets (<code class="docutils literal notranslate"><span class="pre">rxtime</span></code> in the <code class="docutils literal notranslate"><span class="pre">upinfo</span></code> structure).</p>
+<dl class="c var">
+<dt class="sig sig-object c" id="c.rt_utcOffset">
+<span class="n"><span class="pre">ustime_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rt_utcOffset</span></span></span><a class="headerlink" href="#c.rt_utcOffset" title="Link to this definition"></a><br /></dt>
+<dd><p>The offset between the system time epoch and UTC epoch in microseconds with a precision of a few hundred milliseconds (network roundtrip latency). Add to <code class="docutils literal notranslate"><span class="pre">rt_getTime()</span></code> to obtain UTC microsecond timestamp (number of microseconds since UTC epoch). Updated on every server message which contains <code class="docutils literal notranslate"><span class="pre">MuxTime</span></code>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.rt_getUTC">
+<span class="n"><span class="pre">ustime_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rt_getUTC</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.rt_getUTC" title="Link to this definition"></a><br /></dt>
+<dd><p>Convenience function to retrieve current UTC time. Expects <code class="docutils literal notranslate"><span class="pre">rt_utcOffset</span></code> to be set.</p>
+</dd></dl>
+
+</section>
+<section id="gps-if-pps-enabled">
+<h3>GPS (if PPS enabled)<a class="headerlink" href="#gps-if-pps-enabled" title="Link to this heading"></a></h3>
+<p>With PPS enabled, a Station has access to a microsecond counter latched to the last rising edge of the PPS (PPS-latched <code class="docutils literal notranslate"><span class="pre">xticks</span></code> of the SX1301). In order to convert between <code class="docutils literal notranslate"><span class="pre">xtime</span></code> (i.e., roll-over compensated <code class="docutils literal notranslate"><span class="pre">xticks</span></code>) and GPS time, we need to establish how many seconds have passed between an observed PPS pulse and the GPS epoch (00:00h 6-Jan-1980). This is done via a message exchange with the LNS (see <a class="reference internal" href="lns-protocol.html#timesyncproto"><span class="std std-ref">Synchronizing PPS to GPS Time</span></a>). The result of this exchange is a tuple (<code class="docutils literal notranslate"><span class="pre">txtime</span></code>, <code class="docutils literal notranslate"><span class="pre">gpstime</span></code>, <code class="docutils literal notranslate"><span class="pre">rxtime</span></code>) and a value for <code class="docutils literal notranslate"><span class="pre">gpsOffset</span></code>, which is the difference between the local epoch and the GPS time epoch, i.e., <code class="docutils literal notranslate"><span class="pre">gpsOffset</span> <span class="pre">=</span> <span class="pre">us_0</span> <span class="pre">-</span> <span class="pre">gps_0</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>                             <span class="n">gps_s</span>           <span class="n">gpstime</span>
+    <span class="n">gps_0</span>  <span class="o">|</span>                    <span class="n">v</span><span class="o">....</span> <span class="n">gps_us</span> <span class="o">....</span><span class="n">v</span>
+     <span class="n">v</span>     <span class="o">|</span>                     <span class="n">____________________________________</span>
+<span class="n">PPS</span>  <span class="n">x</span><span class="o">-----|</span><span class="n">____________________</span><span class="o">|</span>                                         <span class="n">GPS</span> <span class="n">Time</span>
+           <span class="o">|</span>   <span class="n">______________________________________________________</span>
+<span class="n">USS</span>     <span class="n">x</span><span class="o">--|</span><span class="n">__</span><span class="o">|...</span> <span class="n">ppsOffset</span> <span class="o">...</span>                                          <span class="n">Local</span> <span class="n">Time</span>
+        <span class="o">^</span>  <span class="o">|</span>  <span class="o">^</span>                 <span class="o">^</span>            <span class="o">^</span>         <span class="o">^</span>
+     <span class="n">us_0</span>  <span class="o">|</span> <span class="n">us_s</span>            <span class="n">pps_ustime</span>     <span class="n">txtime</span>    <span class="n">rxtime</span>
+</pre></div>
+</div>
+<p>This example illustrates how the GPS time reference is obtained:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[]</span> <span class="n">Last</span> <span class="n">PPS</span><span class="p">:</span>       <span class="n">pps_xtime</span>  <span class="o">=</span> <span class="mh">0x520000003906F0</span>
+                   <span class="n">pps_ustime</span> <span class="o">=</span> <span class="mh">0xA03F1BEC1D</span>
+<span class="p">[]</span> <span class="n">Obtained</span> <span class="n">initial</span> <span class="n">ppsOffset</span> <span class="o">=</span> <span class="mi">561885</span>
+<span class="p">[]</span> <span class="n">Timesync</span> <span class="n">message</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;msgtype&#39;</span><span class="p">:</span> <span class="s1">&#39;timesync&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;gpstime&#39;</span><span class="p">:</span> <span class="mi">1238942913655858</span><span class="p">,</span>
+                      <span class="s1">&#39;txtime&#39;</span><span class="p">:</span> <span class="mi">688254167114</span><span class="p">}</span>
+<span class="p">[]</span> <span class="n">Timesync</span> <span class="n">LNS</span><span class="p">:</span> <span class="n">tx</span><span class="o">/</span><span class="n">rx</span><span class="p">:</span><span class="mh">0xA03F1C956D</span><span class="o">.</span><span class="mf">.0</span><span class="n">xA03F1E2975</span> <span class="p">(</span><span class="mi">103</span><span class="n">ms432us</span><span class="p">)</span>
+                 <span class="n">us</span><span class="o">/</span><span class="n">gps</span><span class="p">:</span><span class="mh">0xA03F1BEC1D</span><span class="o">/</span><span class="mh">0x466CFE043F432</span> <span class="p">(</span><span class="n">ppsOffset</span><span class="o">=</span><span class="mi">561885</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="n">solutions</span>
+<span class="p">[]</span> <span class="n">Timesync</span> <span class="k">with</span> <span class="n">LNS</span><span class="p">:</span> <span class="n">gpsOffset</span><span class="o">=</span><span class="mh">0x466CFE039F240</span>
+</pre></div>
+</div>
+<p>us_0 - gps_0</p>
+<p>(gps_s + gps_0) = (pps_ustime + us_0)</p>
+<p>gps_s - pps_ustime = us_0 - gps_0</p>
+<ol class="arabic simple">
+<li><p>Fetch last PPS-latched <code class="docutils literal notranslate"><span class="pre">pps_xtime</span></code> counter and convert it to <code class="docutils literal notranslate"><span class="pre">pps_ustime</span></code>: <code class="docutils literal notranslate"><span class="pre">pps_ustime</span> <span class="pre">=</span> <span class="pre">ts_xtime2ustime(pps_xtime)</span></code></p></li>
+<li><p>Calculate <code class="docutils literal notranslate"><span class="pre">ppsOffset</span> <span class="pre">=</span> <span class="pre">pps_ustime</span> <span class="pre">%</span> <span class="pre">1e6</span></code></p></li>
+<li><p>Do a timesync server exchange, which yields <code class="docutils literal notranslate"><span class="pre">txtime</span></code>/<code class="docutils literal notranslate"><span class="pre">rxtime</span></code> (local time domain) and <code class="docutils literal notranslate"><span class="pre">gpstime</span></code> (gps time domain).</p></li>
+<li><p>Verify that <code class="docutils literal notranslate"><span class="pre">txtime%1e6-ppsOffset</span> <span class="pre">&lt;</span> <span class="pre">gpstime%1e6</span> <span class="pre">&lt;</span> <span class="pre">rxtime%1e6-ppsOffset</span></code></p></li>
+</ol>
+<dl class="c var">
+<dt class="sig sig-object c" id="c.ppsOffset">
+<span class="n"><span class="pre">ustime_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ppsOffset</span></span></span><a class="headerlink" href="#c.ppsOffset" title="Link to this definition"></a><br /></dt>
+<dd><p>The fractional part of the system time second, where the PPS rising edge occurs (in microseconds). This value is refreshed after it drifts more than Q90 of the MCU drift. The value is between <code class="docutils literal notranslate"><span class="pre">0</span></code> and <code class="docutils literal notranslate"><span class="pre">1e6-1</span></code>. <code class="docutils literal notranslate"><span class="pre">-1</span></code> if no PPS.</p>
+</dd></dl>
+
+<dl class="c var">
+<dt class="sig sig-object c" id="c.gpsOffset">
+<span class="n"><span class="pre">sL_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">gpsOffset</span></span></span><a class="headerlink" href="#c.gpsOffset" title="Link to this definition"></a><br /></dt>
+<dd><p>The offset between the <code class="docutils literal notranslate"><span class="pre">xtime</span></code> epoch and the GPS time epoch, in microseconds. This value is calculated after a <code class="docutils literal notranslate"><span class="pre">timesync</span></code> message exchange with the server.</p>
+</dd></dl>
+
+</section>
+</section>
+<section id="time-conversion-apis">
+<h2>Time Conversion APIs<a class="headerlink" href="#time-conversion-apis" title="Link to this heading"></a></h2>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.rt_ustime2utc">
+<span class="n"><span class="pre">ustime_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rt_ustime2utc</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">ustime_t</span></span><span class="w"> </span><span class="n"><span class="pre">ustime</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.rt_ustime2utc" title="Link to this definition"></a><br /></dt>
+<dd><p>Convenience function to convert from system time to UTC by adding <code class="docutils literal notranslate"><span class="pre">rt_utcOffset</span></code>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.ts_xticks2xtime">
+<span class="n"><span class="pre">sL_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ts_xticks2xtime</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">u4_t</span></span><span class="w"> </span><span class="n"><span class="pre">xticks</span></span>, <span class="n"><span class="pre">sL_t</span></span><span class="w"> </span><span class="n"><span class="pre">last_xtime</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.ts_xticks2xtime" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.ts_xtime2xtime">
+<span class="n"><span class="pre">sL_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ts_xtime2xtime</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">sL_t</span></span><span class="w"> </span><span class="n"><span class="pre">xtime</span></span>, <span class="n"><span class="pre">u1_t</span></span><span class="w"> </span><span class="n"><span class="pre">dst_txunit</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.ts_xtime2xtime" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.ts_xtime2ustime">
+<span class="n"><span class="pre">ustime_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ts_xtime2ustime</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">sL_t</span></span><span class="w"> </span><span class="n"><span class="pre">xtime</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.ts_xtime2ustime" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.ts_ustime2xtime">
+<span class="n"><span class="pre">sL_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ts_ustime2xtime</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">u1_t</span></span><span class="w"> </span><span class="n"><span class="pre">txunit</span></span>, <span class="n"><span class="pre">ustime_t</span></span><span class="w"> </span><span class="n"><span class="pre">ustime</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.ts_ustime2xtime" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.ts_xtime2gpstime">
+<span class="n"><span class="pre">sL_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ts_xtime2gpstime</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">sL_t</span></span><span class="w"> </span><span class="n"><span class="pre">xtime</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.ts_xtime2gpstime" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.ts_gpstime2xtime">
+<span class="n"><span class="pre">sL_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ts_gpstime2xtime</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">u1_t</span></span><span class="w"> </span><span class="n"><span class="pre">txunit</span></span>, <span class="n"><span class="pre">sL_t</span></span><span class="w"> </span><span class="n"><span class="pre">gpstime</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.ts_gpstime2xtime" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</section>
+<section id="time-transfer">
+<h2>Time Transfer<a class="headerlink" href="#time-transfer" title="Link to this heading"></a></h2>
+</section>
+<section id="faq">
+<h2>FAQ<a class="headerlink" href="#faq" title="Link to this heading"></a></h2>
+<p><strong>Why is there no PPS &lt;-&gt; MCU synchronization?</strong></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, skerlan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
